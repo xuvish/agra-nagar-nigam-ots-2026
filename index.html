@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agra Nagar Nigam · OTS 2026-27 · Production Portal</title>
+<meta name="description" content="Nagar Nigam Agra OTS 2026-27 verified reporting and reconciliation dashboard.">
+<meta name="theme-color" content="#2c6289">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<div class="topbar"><div class="topin">
+  <div class="brand"><div class="ann">ANN</div><div><h1>Agra Nagar Nigam · OTS 2026-27</h1><small>Excel Upload Dashboard · Chhatta · Hariparwat · Tajganj · Lohamandi</small></div></div>
+  <div class="actions">
+    <button class="btn ghost" onclick="resetVerified()">Reset Verified</button><button class="btn ghost" onclick="exportBackup()">Export Backup</button>
+    <label class="btn ghost" style="cursor:pointer">Import Backup<input id="backupInput" type="file" accept=".json" hidden onchange="importBackup(this.files[0])"></label>
+    <button class="btn gold" onclick="window.print()">Print / Save PDF</button>
+    <button class="btn" onclick="openReports()">Manage reports</button>
+  </div>
+</div></div>
+
+<div class="wrap">
+  <div class="statusline"><span class="dot"></span><span id="statusStrong">VERIFIED SNAPSHOT LOADED</span><span class="plain" id="statusPlain">15 September 2026 · calculations reconciled</span></div>
+  <div class="filters">
+    <input class="control" id="search" placeholder="Search application, property, ward, RI, cashier or person" oninput="renderAll()">
+    <select class="control" id="zone" onchange="onZoneChange()"><option value="All">All zones</option><option>Chhatta</option><option>Hariparwat</option><option>Tajganj</option><option>Lohamandi</option><option>Unresolved</option></select>
+    <select class="control" id="ri" onchange="renderAll()"><option value="All">All RIs</option></select>
+    <select class="control" id="cashier" onchange="renderAll()"><option value="All">All cashiers</option></select>
+  </div>
+
+  <div class="hero">
+    <div class="mini" id="heroMini">OTS 2026-27 · Status as of 15 September 2026</div>
+    <h2 id="heroTitle">Agra Nagar Nigam Dashboard</h2>
+    <p id="heroText">Citywide verified figures from the reconciled master workbook.</p>
+    <div class="joint" id="jointBox"></div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi teal"><div class="label">Previous Days' Collection</div><div class="value" id="kPrev">—</div><div class="sub" id="sPrev">Before latest payment date</div></div>
+    <div class="kpi gold"><div class="label">Today's Collection</div><div class="value" id="kToday">—</div><div class="sub" id="sToday">Latest payment date</div></div>
+    <div class="kpi teal"><div class="label">Total Collection to Date</div><div class="value" id="kTotal">—</div><div class="sub">Receipt register allocation</div></div>
+    <div class="kpi"><div class="label">Applications</div><div class="value" id="kApps">—</div><div class="sub">Recorded applications</div></div>
+    <div class="kpi"><div class="label">Approved</div><div class="value" id="kApproved">—</div><div class="sub">Latest recorded status</div></div>
+    <div class="kpi"><div class="label">In Process</div><div class="value" id="kProcess">—</div><div class="sub">Current workflow</div></div>
+    <div class="kpi"><div class="label">Rejected / Cancelled</div><div class="value" id="kRejected">—</div><div class="sub">Latest recorded status</div></div>
+    <div class="kpi teal"><div class="label">Online Collection</div><div class="value" id="kOnline">—</div><div class="sub" id="sOnline">Separate payment channel</div></div>
+    <div class="kpi"><div class="label">Paying Applications</div><div class="value" id="kPaid">—</div><div class="sub">Applications with receipts</div></div>
+    <div class="kpi"><div class="label">Approval Rate</div><div class="value" id="kRate">—</div><div class="sub">Approved ÷ applications</div></div>
+    <div class="kpi"><div class="label">Demand Generated</div><div class="value" id="kDemand">—</div><div class="sub">Application-summary demand</div></div>
+    <div class="kpi"><div class="label">Summary Received</div><div class="value" id="kSummary">—</div><div class="sub">Application-summary received</div></div>
+  </div>
+
+  <div class="grid3" style="margin-top:13px">
+    <div class="card"><h3>Operational conversion</h3><div class="audit" style="grid-template-columns:1fr 1fr"><div class="auditbox"><span>Approved → Paid</span><b id="mPaidConv">—</b></div><div class="auditbox"><span>Average receipt</span><b id="mAvgReceipt">—</b></div></div></div>
+    <div class="card"><h3>Revenue view</h3><div class="audit" style="grid-template-columns:1fr 1fr"><div class="auditbox"><span>Receipt / Generated Demand</span><b id="mRecovery">—</b></div><div class="auditbox"><span>Unresolved allocation</span><b id="mUnresolved">—</b></div></div></div>
+    <div class="card"><h3>Allocation confidence</h3><div class="audit" style="grid-template-columns:repeat(3,1fr)"><div class="auditbox"><span>Exact</span><b id="mExact">—</b></div><div class="auditbox"><span>Provisional</span><b id="mProv">—</b></div><div class="auditbox"><span>Unresolved</span><b id="mUnrPct">—</b></div></div></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="overview">Overview</div><div class="tab" data-tab="zones">Zones & RIs</div><div class="tab" data-tab="wards">Ward performance</div><div class="tab" data-tab="cashiers">Cashiers</div><div class="tab" data-tab="applications">Applications</div><div class="tab" data-tab="payments">Payments</div><div class="tab" data-tab="quality">Data quality</div>
+  </div>
+
+  <section class="panel active" id="overview">
+    <div class="grid2">
+      <div class="card"><h3>Collection by payment date</h3><div class="hint">Calculated directly from 454 receipt rows; not from displayed KPI cards.</div><div class="bars" id="dailyBars"></div></div>
+      <div class="card"><h3>Collection by cashier / channel</h3><div class="hint">Filtered by selected zone when possible.</div><div class="bars" id="cashierBars"></div></div>
+    </div>
+    <div class="grid2" style="margin-top:13px">
+      <div class="card"><h3>In-process accountability</h3><div class="hint">Application-level pending holder and ageing from the consolidated register.</div><div id="pendingBreakdown"></div></div>
+      <div class="card"><h3>Final approval authority</h3><div class="hint">TS approval rows retained exactly from the source. Joint Tajganj/Lohamandi responsibility is not artificially split.</div><div id="tsBreakdown"></div></div>
+    </div>
+  </section>
+
+  <section class="panel" id="zones"><div class="card"><h3>Zone and RI / TC performance</h3><div class="hint">Zone control figures come from the reconciled Zone & RI sheet. RI rows are linked to zone through the ward roster.</div><div class="tablewrap"><table><thead><tr><th>Zone / RI</th><th>TS</th><th class="num">Apps</th><th class="num">Approved</th><th class="num">In process</th><th class="num">Summary received</th><th class="num">Receipt collection</th><th class="num">Demand</th></tr></thead><tbody id="zoneBody"></tbody></table></div></div></section>
+
+  <section class="panel" id="wards"><div class="card"><h3>Ward performance</h3><div class="hint">Only verified/mapped ward rows are attributed to an RI. Unresolved rows remain unresolved.</div><div class="tablewrap"><table><thead><tr><th>Zone</th><th>No.</th><th>Ward</th><th>RI / TC</th><th class="num">Apps</th><th class="num">Approved</th><th class="num">In process</th><th class="num">Summary received</th><th class="num">Receipt collection</th></tr></thead><tbody id="wardBody"></tbody></table></div></div></section>
+
+  <section class="panel" id="cashiers"><div class="card"><h3>Cashier / channel register</h3><div class="hint">Recomputed from payment rows for the active zone; one receipt counted once.</div><div class="tablewrap"><table><thead><tr><th>Cashier / channel</th><th class="num">Receipts</th><th class="num">Collection</th><th class="num">Share</th></tr></thead><tbody id="cashierBody"></tbody></table></div></div></section>
+
+  <section class="panel" id="applications"><div class="card"><h3>Application register</h3><div class="hint" id="appHint"></div><div class="tablewrap"><table><thead><tr><th>Application No.</th><th>Owner / applicant</th><th>Property UID</th><th>House no.</th><th>Status</th><th>Zone</th><th>Ward</th><th>RI / TC</th><th class="num">Paid</th><th>TS</th></tr></thead><tbody id="appBody"></tbody></table></div></div></section>
+
+  <section class="panel" id="payments"><div class="card"><h3>Receipt register</h3><div class="hint" id="payHint"></div><div class="tablewrap"><table><thead><tr><th>Date</th><th>Receipt</th><th>Application</th><th>Payer</th><th>Cashier</th><th>Allocated zone</th><th>Ward</th><th>RI / TC</th><th class="num">Amount</th></tr></thead><tbody id="payBody"></tbody></table></div></div></section>
+
+  <section class="panel" id="quality">
+    <div class="card"><h3>Calculation audit</h3><div class="hint">These controls must reconcile before this portal should be handed over.</div><div class="audit">
+      <div class="auditbox"><span>Application rows</span><b id="aApps">—</b></div>
+      <div class="auditbox"><span>Approved rows</span><b id="aApproved">—</b></div>
+      <div class="auditbox"><span>Receipt rows</span><b id="aReceipts">—</b></div>
+      <div class="auditbox"><span>Receipt amount</span><b id="aAmount">—</b></div>
+    </div><div id="auditNotes" style="margin-top:14px"></div>
+    <div class="grid2" style="margin-top:13px"><div class="card" style="box-shadow:none"><h3>Source & freshness</h3><div id="sourceManifest" class="hint"></div></div><div class="card" style="box-shadow:none"><h3>Handover safeguards</h3><div class="hint">Wrong master formats are rejected; source controls must reconcile; browser data is persisted locally; backup JSON can be exported/imported; unknown mapping remains unresolved rather than guessed.</div></div></div>
+    </div>
+  </section>
+  <div class="footer">Nagar Nigam Agra · OTS 2026-27 · Browser-local reporting portal</div>
+</div>
+
+<div class="modal" id="reportsModal"><div class="modalbox">
+  <div style="display:flex;justify-content:space-between;gap:12px;align-items:start"><div><h2 style="margin:0">Manage reports</h2><p style="margin:5px 0 0;color:#718193;font-size:12px">One-go verified import: upload the consolidated master workbook. The portal validates four primary controls plus daily/cashier/zone recomputations before replacing the live dashboard.</p></div><button class="btn" onclick="closeReports()">✕</button></div>
+  <div class="drop"><b>Choose master Excel workbook</b><div style="font-size:11px;color:#7b8996;margin-top:5px">Expected sheets: Dashboard · Zone and RI · Ward Summary · Daily Cashiers · Applications · Payments</div><input id="masterFile" type="file" accept=".xlsx,.xls"></div>
+  <div class="progress" id="progress"></div><div id="errorBox"></div>
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:13px"><button class="btn" style="background:#edf2f5;color:#42566a" onclick="closeReports()">Cancel</button><button class="btn" style="background:#235f87;color:#fff" onclick="processMaster()">Process master workbook</button></div>
+</div></div>
+
+<script src="data/part-01.js"></script>
+<script src="data/part-02.js"></script>
+<script src="data/part-03.js"></script>
+<script src="data/part-04.js"></script>
+<script src="data/part-05.js"></script>
+<script src="data/loader.js"></script>
+<script src="assets/app.js"></script>
+</body></html>
