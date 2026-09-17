@@ -1,0 +1,83 @@
+/* Final official Nagar Nigam MIS presentation layer. Data/calculation logic untouched. */
+:root{
+  --gov-navy:#123b63;
+  --gov-navy-2:#0d3155;
+  --gov-blue:#1d5f96;
+  --gov-light:#eef2f6;
+  --gov-border:#d0d5dd;
+  --gov-text:#1d2939;
+  --gov-muted:#667085;
+  --gov-green:#15803d;
+  --gov-amber:#b45309;
+  --gov-red:#b42318;
+}
+html,body{background:var(--gov-light)!important;color:var(--gov-text)!important}
+body{cursor:auto!important;font-family:Arial,"Noto Sans Devanagari","Segoe UI",sans-serif!important}
+button,input,select,.clickable{cursor:pointer!important}
+#space,.bg-grid,.orb,.cursor-dot,.cursor-ring{display:none!important}
+.shell{max-width:1500px!important;padding:14px 18px 34px!important}
+.top{top:0!important;border-radius:5px!important;background:var(--gov-navy)!important;border:0!important;box-shadow:0 2px 8px rgba(16,24,40,.18)!important;backdrop-filter:none!important;padding:11px 15px!important}
+.logo{width:42px!important;height:42px!important;border-radius:4px!important;background:#fff!important;color:var(--gov-navy)!important;border:1px solid rgba(255,255,255,.65)!important;box-shadow:none!important}
+.logo:before{display:none!important}.logo b{font-size:11px!important;letter-spacing:.08em!important}
+.brand h1{color:#fff!important;font-size:19px!important;font-weight:800!important;letter-spacing:.01em!important}
+.brand small{color:#dbe8f4!important;font-size:10px!important}
+.btn{border-radius:4px!important;box-shadow:none!important;transform:none!important;font-weight:700!important}
+.top .btn{background:#fff!important;color:var(--gov-navy)!important;border-color:#fff!important}
+.top .btn.primary{background:#e8f1f8!important;color:var(--gov-navy)!important}
+
+.official-live-strip{margin-top:10px;display:grid;grid-template-columns:auto repeat(3,minmax(0,1fr));gap:0;background:#fff;border:1px solid var(--gov-border);border-left:4px solid var(--gov-green);border-radius:4px;box-shadow:0 1px 3px rgba(16,24,40,.06);overflow:hidden}
+.official-live-strip>span{padding:9px 12px;border-right:1px solid #eaecf0;font-size:11px;color:var(--gov-muted);white-space:nowrap}
+.official-live-strip>span:last-child{border-right:0}
+.official-live-strip b{color:var(--gov-text);font-weight:700}
+.official-live-strip .live-label{display:flex;align-items:center;gap:7px;color:var(--gov-green);font-weight:800;background:#f0fdf4}
+.official-live-strip .live-label:before{content:"";width:8px;height:8px;border-radius:50%;background:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,.12);animation:officialPulse 1.5s ease-in-out infinite}
+@keyframes officialPulse{50%{opacity:.45}}
+
+.hero{margin-top:10px!important;grid-template-columns:minmax(0,1fr) 330px!important;gap:10px!important}
+.hero-main,.hero-side,.glass{background:#fff!important;color:var(--gov-text)!important;border:1px solid var(--gov-border)!important;border-radius:5px!important;box-shadow:0 1px 4px rgba(16,24,40,.06)!important;backdrop-filter:none!important}
+.hero-main{padding:12px 15px!important;min-height:auto!important}.hero-main:after{display:none!important}
+.hero-main h2,.hero-main p{display:none!important}
+.eyebrow{color:var(--gov-green)!important;font-size:11px!important;letter-spacing:.05em!important;font-weight:800!important}.live-dot{background:#16a34a!important;box-shadow:none!important}
+.hero-side{padding:10px 14px!important;display:block!important}.status-block{align-items:center!important}.status-block span{color:var(--gov-muted)!important}.status-block strong{font-size:18px!important;color:var(--gov-navy)!important}.signal{display:none!important}
+.hero-side .notice{margin-top:5px!important;padding:0!important;border:0!important;background:transparent!important;color:var(--gov-muted)!important}
+
+.toolbar{margin-top:10px!important;gap:8px!important}.control{background:#fff!important;color:var(--gov-text)!important;border:1px solid #b8c0cc!important;border-radius:4px!important;box-shadow:none!important;padding:10px 11px!important}.control:focus{border-color:var(--gov-blue)!important;box-shadow:0 0 0 2px rgba(29,95,150,.12)!important}
+.kpis{gap:8px!important;margin-top:10px!important}.kpi{min-height:95px!important;padding:13px 13px 11px!important;background:#fff!important;border:1px solid var(--gov-border)!important;border-radius:5px!important;box-shadow:0 1px 3px rgba(16,24,40,.05)!important;transform:none!important}.kpi:after{display:none!important}.kpi:hover{transform:none!important;border-color:#98a2b3!important;box-shadow:0 2px 6px rgba(16,24,40,.08)!important}.kpi .lab{color:var(--gov-muted)!important;font-size:9px!important;letter-spacing:.06em!important}.kpi .val{color:var(--gov-navy)!important;font-size:22px!important;margin-top:8px!important}.kpi .sub{color:var(--gov-muted)!important}.kpi.good .val{color:var(--gov-green)!important}.kpi.warn .val{color:var(--gov-amber)!important}.kpi.alert .val{color:var(--gov-red)!important}
+.nav{top:65px!important;margin-top:10px!important;padding:0!important;border:1px solid var(--gov-navy)!important;background:var(--gov-navy)!important;border-radius:4px!important;backdrop-filter:none!important;gap:0!important}.tab{border-radius:0!important;color:#d9e5ef!important;padding:10px 13px!important;border-right:1px solid rgba(255,255,255,.13)!important}.tab.on{background:#fff!important;color:var(--gov-navy)!important;box-shadow:none!important}
+.panel{margin-top:10px!important}.grid2,.grid3{gap:10px!important}.glass{padding:15px!important}.glass h3{font-size:14px!important;color:var(--gov-navy)!important;border-bottom:2px solid #e4e7ec;padding-bottom:7px!important}.glass .hint{color:var(--gov-muted)!important}
+.metric-row{gap:7px!important}.mini{background:#f8fafc!important;border:1px solid #e4e7ec!important;border-radius:4px!important}.mini span{color:var(--gov-muted)!important}.mini b{color:var(--gov-navy)!important}
+.tablewrap{border:1px solid var(--gov-border)!important;border-radius:3px!important;background:#fff!important}.tablewrap table{background:#fff!important}th{background:#e8eef5!important;color:#344054!important;border-bottom:1px solid #b9c4d0!important}td{color:#344054!important;border-bottom:1px solid #eaecf0!important}tbody tr:hover{background:#f8fafc!important}
+.badge{border-radius:3px!important;background:#eff8ff!important;color:#175cd3!important;border-color:#b2ddff!important}.badge.green{background:#ecfdf3!important;color:#027a48!important;border-color:#abefc6!important}.badge.gold{background:#fffaeb!important;color:#b54708!important;border-color:#fedf89!important}.badge.red{background:#fef3f2!important;color:#b42318!important;border-color:#fecdca!important}
+.chart{border-bottom:1px solid #e4e7ec!important}.barfill{background:#2f6fa5!important;box-shadow:none!important;border-radius:3px 3px 0 0!important}.barcol small{color:var(--gov-muted)!important}.tooltip{background:#fff!important;color:var(--gov-text)!important;border-color:var(--gov-border)!important;box-shadow:0 2px 8px rgba(16,24,40,.14)!important}
+.step{background:#f8fafc!important;border:1px solid #d0d5dd!important;border-radius:4px!important}.step:after{color:var(--gov-blue)!important}.step i,.step p{color:var(--gov-muted)!important}.step b{color:var(--gov-navy)!important}
+.notice{border:1px solid #fedf89!important;background:#fffaeb!important;color:#7a2e0e!important;border-radius:4px!important}.queue-item{border-color:#eaecf0!important}.queue-item .meta{color:var(--gov-muted)!important}.queue-item select{background:#fff!important;color:var(--gov-text)!important;border-color:#b8c0cc!important;border-radius:4px!important}
+.modal{background:rgba(16,24,40,.56)!important}.modalbox{background:#fff!important;color:var(--gov-text)!important;border:1px solid #98a2b3!important;border-radius:5px!important;box-shadow:0 20px 50px rgba(16,24,40,.24)!important}.drop{background:#f8fafc!important;border-color:#98a2b3!important;border-radius:4px!important}.msg{background:#fffaeb!important;border-color:#fedf89!important;color:#7a2e0e!important}.footer{color:var(--gov-muted)!important}
+
+@media(max-width:900px){
+  .shell{padding:8px!important}.top{position:relative!important}.brand h1{font-size:14px!important}.official-live-strip{grid-template-columns:1fr 1fr}.official-live-strip>span{white-space:normal;font-size:9px}.hero{grid-template-columns:1fr!important}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}.nav{top:0!important}.tablewrap td:first-child{background:#fff!important}.tablewrap th:first-child{background:#e8eef5!important}
+}
+
+/* Print / PDF: compact A4 layout and predictable page breaks. */
+@page{size:A4 landscape;margin:7mm}
+@media print{
+  html,body{background:#fff!important;color:#000!important;width:auto!important;height:auto!important;overflow:visible!important}
+  body{zoom:.68!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  #space,.bg-grid,.orb,.cursor-dot,.cursor-ring,.actions,.toolbar,.nav,.footer,.modal,#reportModal,#adminLoginModal{display:none!important}
+  .shell{max-width:none!important;width:100%!important;margin:0!important;padding:0!important}
+  .top{position:static!important;margin:0 0 4px!important;padding:6px 9px!important;box-shadow:none!important;border:1px solid #123b63!important}
+  .logo{width:30px!important;height:30px!important}.brand h1{font-size:15px!important}.brand small{font-size:8px!important}
+  .official-live-strip{margin:3px 0 4px!important;box-shadow:none!important;grid-template-columns:auto repeat(3,1fr)!important}.official-live-strip>span{padding:4px 6px!important;font-size:8px!important}
+  .hero{margin:0 0 4px!important;grid-template-columns:1fr 260px!important;gap:4px!important}.hero-main,.hero-side{padding:5px 7px!important;box-shadow:none!important}.eyebrow{font-size:8px!important}.status-block strong{font-size:12px!important}.hero-side .notice{font-size:7px!important}
+  .kpis{grid-template-columns:repeat(6,1fr)!important;gap:4px!important;margin:4px 0!important}.kpi{min-height:50px!important;padding:6px 7px!important;box-shadow:none!important;break-inside:avoid-page!important;page-break-inside:avoid!important}.kpi .lab{font-size:6.8px!important}.kpi .val{font-size:13px!important;margin-top:3px!important}.kpi .sub{font-size:6.5px!important;margin-top:2px!important}
+  .panel{display:none!important;margin:0!important}.panel.on{display:block!important;animation:none!important}
+  .grid2{grid-template-columns:1.12fr .88fr!important;gap:4px!important}.grid3{gap:4px!important}.glass{padding:6px!important;border-radius:2px!important;box-shadow:none!important;margin:0!important;break-inside:avoid-page!important;page-break-inside:avoid!important}.glass h3{font-size:9px!important;padding-bottom:3px!important}.glass .hint{font-size:6.5px!important;margin-top:2px!important}
+  #command .glass{break-inside:avoid-page!important;page-break-inside:avoid!important}
+  .metric-row{gap:3px!important;margin-top:4px!important}.mini{padding:4px!important;break-inside:avoid!important}.mini span{font-size:6px!important}.mini b{font-size:10px!important;margin-top:2px!important}
+  .chart{height:82px!important;padding:4px 3px 14px!important;gap:2px!important}.barcol small{font-size:5.5px!important;bottom:-11px!important}.tooltip{display:none!important}
+  .tablewrap{max-height:none!important;overflow:visible!important;margin-top:4px!important;border-radius:0!important}.tablewrap table{width:100%!important;min-width:0!important;font-size:6.8px!important}thead{display:table-header-group!important}tr{break-inside:avoid!important;page-break-inside:avoid!important}th,td{padding:2.2px 3px!important;white-space:normal!important;line-height:1.18!important}th{position:static!important;font-size:6.2px!important}
+  .flow{gap:3px!important;margin-top:4px!important}.step{min-height:55px!important;padding:5px!important;break-inside:avoid!important}.step i{font-size:5.5px!important}.step b{font-size:10px!important;margin-top:3px!important}.step p{font-size:6px!important;margin-top:3px!important}.step:after{font-size:9px!important;right:-5px!important}
+  .notice{padding:4px 5px!important;font-size:6.5px!important;line-height:1.25!important;break-inside:avoid-page!important;page-break-inside:avoid!important}
+  .queue-item{break-inside:avoid!important;page-break-inside:avoid!important;padding:3px!important}
+  #followup .glass,#zonesri .glass,#cashiers .glass{break-inside:auto!important;page-break-inside:auto!important}
+  #followup .tablewrap,#zonesri .tablewrap,#cashiers .tablewrap{overflow:visible!important;max-height:none!important}
+}
