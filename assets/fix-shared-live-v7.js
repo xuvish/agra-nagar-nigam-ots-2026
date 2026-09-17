@@ -56,6 +56,9 @@ function aggregate(E){
  const city={...(E.controls?.city||{}),...pm.city};
  const zones={};for(const z of ZONES)zones[z]={...(E.controls?.zones?.[z]||{}),...pm.zones[z]};
  const zc={};for(const z of ZONES)zc[z]=Object.entries(zoneCash[z]).map(([cashier,x])=>({cashier,receipts:x.receipts,amount:round2(x.amount)})).sort((a,b)=>b.amount-a.amount);
+ const unresolvedRows=E.unresolved||[],controlRows=(E.wardRows||[]).filter(r=>{const x=n((r?.ri||'')+' '+(r?.ward||''));return x.includes('unresolved')||x.includes('unassigned')||x.includes('ambiguous')||x.includes('needs classification')||x.includes('zone control')});
+ const sum=(rows,key)=>rows.reduce((a,r)=>a+num(r?.[key]),0);
+ const unresolved={applications:sum(unresolvedRows,'applications'),approved:sum(unresolvedRows,'approved'),inProcess:sum(unresolvedRows,'inProcess'),rejected:sum(unresolvedRows,'rejected'),summaryReceived:round2(sum(unresolvedRows,'receivedSummary')),demand:round2(sum(unresolvedRows,'demand')),payingApps:sum(controlRows,'paidApplicants'),receipts:sum(controlRows,'receipts'),collection:round2(sum(controlRows,'collection'))};
  return{
   snapshot:s(E.snapshot),city,zones,
   cityDaily:toDaily(cityDaily),zoneDaily:Object.fromEntries(ZONES.map(z=>[z,toDaily(zoneDaily[z])])),
@@ -63,8 +66,8 @@ function aggregate(E){
   workflowCity:wf.city,stageByZone:wf.byZone,workflowUnallocated:wf.unallocated,paymentMetrics:pm,
   riRows:E.riRows||[],wardRows:E.wardRows||[],
   joint:{applications:0,approved:0,inProcess:0,rejected:0,summaryReceived:0,demand:0,payingApps:0,receipts:0,collection:0},
-  unresolved:{applications:0,approved:0,inProcess:0,rejected:0,summaryReceived:0,demand:0,payingApps:0,receipts:0,collection:0},
-  meta:{sourceFiles:E.files||[],engine:'production-v7',collectionAudit:E.collectionAuthorityAudit||null,sourceAuthority:E.sourceAuthorityAudit||null}
+  unresolved,
+  meta:{sourceFiles:E.files||[],engine:'production-v7',collectionAudit:E.collectionAuthorityAudit||null,sourceAuthority:E.sourceAuthorityAudit||null,classifierAudit:E.classifierAudit||null}
  };
 }
 function applyShared(p,updatedAt,source='live',isFinal=false){
