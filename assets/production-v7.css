@@ -3,7 +3,7 @@
  --pblue:#eaf5ff;--pmint:#eafaf2;--ppeach:#fff1e3;--plav:#f3edff;--ppink:#ffeef2;--pcyan:#eafcff;--plemon:#fff9de;
 }
 html,body{background:#fff!important;color:var(--ptext)!important}
-#space,.bg-grid,.orb,.cursor-dot,.cursor-ring,.hero,.nav,.panel,#kpis,.footer{display:none!important}
+#space,.bg-grid,.orb,.cursor-dot,.cursor-ring,.hero,.nav,.panel,#kpis,.footer,#reportScheduleStrip{display:none!important}
 #asof{display:none!important}
 .shell{max-width:1440px!important;margin:0 auto!important;padding:14px 18px 30px!important}
 .top{background:linear-gradient(180deg,#fff,#f8fbfe)!important;border:1px solid #cbdfea!important;border-top:4px solid #215c86!important;border-radius:12px!important;box-shadow:0 8px 28px rgba(37,83,116,.08)!important}
