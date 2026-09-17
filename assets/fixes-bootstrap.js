@@ -19,18 +19,14 @@
                 if(typeof window.processReportSet==='function'){
                   window.processWorkbook=window.processReportSet;
                   const submit=document.querySelector('#reportModal .btn.primary');
-                  if(submit){
-                    submit.onclick=window.processReportSet;
-                    submit.textContent='Submit Reports & Recalculate';
-                  }
+                  if(submit){submit.onclick=window.processReportSet;submit.textContent='Submit Reports & Recalculate';}
                 }
                 load('assets/fix-point7.js?v=20260917-0830',()=>
                   load('assets/fix-engine-v3.js?v=20260917-1205',()=>
                     load('assets/fix-point8.js?v=20260917-1145',()=>{
                       if(typeof window.processReportSet==='function'){
                         window.processWorkbook=window.processReportSet;
-                        const submit=document.querySelector('#reportModal .btn.primary');
-                        if(submit) submit.onclick=window.processReportSet;
+                        const submit=document.querySelector('#reportModal .btn.primary');if(submit)submit.onclick=window.processReportSet;
                       }
                       load('assets/fix-admin-live.js?v=20260917-1310',()=>
                         load('assets/fix-smart-upload.js?v=20260917-1722',()=>
@@ -39,12 +35,11 @@
                               load('assets/fix-unresolved-allocation.js?v=20260917-2025-v1',()=>
                                 load('assets/fix-multi-report-intelligence.js?v=20260917-2350-v1',()=>
                                   load('assets/fix-followup-contact-safety.js?v=20260917-2352-v1',()=>
-                                    load('assets/fix-intelligence-local-bridge.js?v=20260918-0031-callingzone-v2',()=>
+                                    load('assets/fix-intelligence-local-bridge.js?v=20260918-0042-calling-mobile-v3',()=>
                                       load('assets/fix-shared-live.js?v=20260917-2015-v2',()=>{
                                         window.processWorkbook=window.processReportSet;
-                                        const submit=document.querySelector('#reportModal .btn.primary');
-                                        if(submit) submit.onclick=window.processReportSet;
-                                        if(window.renderAll) window.renderAll();
+                                        const submit=document.querySelector('#reportModal .btn.primary');if(submit)submit.onclick=window.processReportSet;
+                                        if(window.renderAll)window.renderAll();
                                       })
                                     )
                                   )
