@@ -1,0 +1,43 @@
+(function(){
+'use strict';
+const ZONES=['Chhatta','Hariparwat','Tajganj','Lohamandi'];
+const E=window.OTS7;
+if(!E)return;
+const oldProcess=window.processReportSet||window.processWorkbook;
+const n=s=>String(s??'').trim().toLowerCase().replace(/&amp;/g,'&').replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
+const num=v=>{const x=Number(String(v??0).replace(/,/g,''));return Number.isFinite(x)?x:0};
+function zoneNorm(s){const x=n(s).replace(/\s/g,'');if(/chh?atta|chhata|chatta/.test(x))return'Chhatta';if(x.includes('haripar')||x.includes('harpar'))return'Hariparwat';if(x.includes('tajganj')||x==='taj')return'Tajganj';if(x.includes('lohamandi')||x.includes('lohamand'))return'Lohamandi';return null}
+function clean(s){let x=n(s);const reps=[
+ [/\bnoori\b/g,'nuri'],[/\bdarwaza\b/g,'darwaja'],[/\bnagala\b|\bnagal\b/g,'nagla'],[/\baawas\b|\bawas\b|\bawash\b/g,'avas'],[/\bvikash\b/g,'vikas'],[/\bpachimi\b|\bpaschimi\b|\bpashchimi\b|\bpaschim\b/g,'west'],[/\bpurvi\b|\bpurab\b/g,'east'],[/\bdakshin\b/g,'south'],[/\bajit\b/g,'ajeet'],[/\bajita\b/g,'ajeeta'],[/\bfuvvara\b|\bfuwara\b/g,'fubbara'],[/\bchowki\b|\bchauki\b|\bchoki\b/g,'chawki'],[/\bharjupura\b/g,'harjjupura'],[/\bfulel\b|\bfullel\b/g,'fulail'],[/\bkhuash\b|\bkhwas\b/g,'khuwash'],[/\bmustfa\b/g,'mustafa'],[/\bquater\b/g,'quarter'],[/\bkhatipada\b|\bkhati pada\b/g,'khati para'],[/\brajamandi\b|\brajimandi\b/g,'raja mandi'],[/\brammohan\b/g,'ram mohan'],[/\beram mohan\b/g,'ram mohan'],[/\bbhadauria\b/g,'bhadauriya'],[/\bghadi\b/g,'gadhi'],[/\bfarzana\b/g,'farjana'],[/\bsarla bagh\b/g,'sarlabagh'],[/\bkachpura\b/g,'kachhpura'],[/\bseeta\b/g,'sita'],[/\brawatpara\b/g,'rawat para'],[/\bnawalnawal\b/g,'nawal'],[/\bnawalganj\b/g,'nawal ganj'],[/\bnamner\b/g,'naam ner'],[/\bidgah\b/g,'edgah'],[/\bmewati nagla\b/g,'nagla mewati'],[/\bshastri\s*puram\b|\bshashtri\s*puram\b|\bshashtripuram\b|\bshastripuram\b|\bsastipshastripuram\b|\bshastshastripuram\b|\bshashtripurshastripuram\b/g,'shastripuram']
+ ];for(const [a,b] of reps)x=x.replace(a,b);x=x.replace(/\b(zone|ward|agra|number|no|block)\b/g,' ').replace(/\s+/g,' ').trim();return x}
+function roster(){return (PUBLIC.roster||[]).map(r=>({...r,_c:clean(r.ward)}))}
+function textMatch(raw){const q0=clean(raw);if(!q0)return null;const q=q0.replace(/\b\d{1,3}\b/g,' ').replace(/\s+/g,' ').trim();if(!q)return null;let a=roster().filter(r=>r._c===q);if(a.length===1)return a[0];a=roster().filter(r=>r._c.length>=5&&(q.includes(r._c)||r._c.includes(q)));const u=new Map(a.map(r=>[`${r.zone}|${r.wardNo}`,r]));return u.size===1?[...u.values()][0]:null}
+function resolve(zoneRaw,wardRaw){
+ let w=textMatch(wardRaw);if(w)return w;
+ const swap=textMatch(zoneRaw);if(swap&&zoneNorm(wardRaw)===swap.zone)return swap;
+ const nums=[...String(wardRaw??'').matchAll(/\b(\d{1,3})\b/g)].map(m=>Number(m[1]));
+ if(nums.length){const all=roster().filter(r=>nums.includes(Number(r.wardNo))),u=new Map(all.map(r=>[`${r.zone}|${r.wardNo}`,r]));if(u.size===1)return[...u.values()][0];const z=zoneNorm(zoneRaw),zset=all.filter(r=>r.zone===z);if(zset.length===1)return zset[0]}
+ return null;
+}
+function rowZone(zr,wr){const w=resolve(zr,wr);if(w)return w.zone;return zoneNorm(zr)||zoneNorm(wr)||null}
+function ensureWard(map,r){const k=`${r.zone}|${r.wardNo}`;let x=map.get(k);if(!x){x={zone:r.zone,wardNo:r.wardNo,ward:r.ward,ri:r.ri,post:r.post,applications:0,approved:0,inProcess:0,rejected:0,applicantPending:0,demand:0,receivedSummary:0,paidApplicants:0,receipts:0,collection:0};map.set(k,x)}return x}
+function rebuild(){
+ const apps=E.apps||[],paidSet=new Set((E.paidRows||[]).map(x=>x['Application number']));
+ const approved=apps.filter(a=>n(a['Application status'])==='approved').length,rejected=apps.filter(a=>/reject|cancel/.test(n(a['Application status']))).length,inProcess=apps.length-approved-rejected,paidApproved=apps.filter(a=>n(a['Application status'])==='approved'&&paidSet.has(a['Application number'])).length;
+ const city={applications:apps.length,approved,inProcess,rejected,payingApps:paidApproved,receipts:(E.payments||[]).length,collection:(E.payments||[]).reduce((s,p)=>s+num(p['Amount (INR)']),0),online:(E.payments||[]).filter(p=>n(p['Cashier / channel'])==='online').reduce((s,p)=>s+num(p['Amount (INR)']),0),demand:0,receivedSummary:0};
+ const zones=Object.fromEntries(ZONES.map(z=>[z,{applications:0,approved:0,inProcess:0,rejected:0,payingApps:0,collection:0,receipts:0,demand:0,receivedSummary:0,applicantPending:0}]));
+ const wmap=new Map(),unresolved=[];
+ for(const r of E._wardSummary||[]){const rw=resolve(r.zoneRaw,r.wardRaw),z=rw?.zone||rowZone(r.zoneRaw,r.wardRaw),inp=num(r.inTime)+num(r.overdue)+num(r.applicant);city.demand+=num(r.demand);city.receivedSummary+=num(r.received);if(z&&zones[z]){zones[z].applications+=num(r.applications);zones[z].approved+=num(r.approved);zones[z].inProcess+=inp;zones[z].rejected+=num(r.rejected);zones[z].demand+=num(r.demand);zones[z].receivedSummary+=num(r.received);zones[z].applicantPending+=num(r.applicant)}if(rw){const x=ensureWard(wmap,rw);x.applications+=num(r.applications);x.approved+=num(r.approved);x.inProcess+=inp;x.rejected+=num(r.rejected);x.applicantPending+=num(r.applicant);x.demand+=num(r.demand);x.receivedSummary+=num(r.received)}else{unresolved.push({...r,zone:z,reason:z?'Source row has zone but no safe ward/RI identity':'Source row has no safe zone/ward identity'})}}
+ const paidAppsByZone=Object.fromEntries(ZONES.map(z=>[z,new Set()]));
+ for(const p of E.payments||[]){const pr=E.paidMap?.get(p['Application number']);if(!pr)continue;const rw=resolve(pr['Raw zone'],pr['Raw ward']),z=rw?.zone||rowZone(pr['Raw zone'],pr['Raw ward']);p['Property zone']=z;p['Property ward']=rw?.ward||pr['Raw ward']||null;p['Property RI']=rw?.ri||null;p['Property UID']=pr['Property UID'];p['House / property no.']=pr['House / property no.'];p['Payment state']=pr['Payment state'];if(z&&zones[z]){zones[z].collection+=num(p['Amount (INR)']);zones[z].receipts++;paidAppsByZone[z].add(p['Application number']);if(rw){const x=ensureWard(wmap,rw);x.collection+=num(p['Amount (INR)']);x.receipts++}}}
+ for(const z of ZONES)zones[z].payingApps=paidAppsByZone[z].size;
+ const seen=new Set();for(const pr of E.paidRows||[]){const rw=resolve(pr['Raw zone'],pr['Raw ward']);if(!rw)continue;const k=`${rw.zone}|${rw.wardNo}|${pr['Application number']}`;if(seen.has(k))continue;seen.add(k);ensureWard(wmap,rw).paidApplicants++}
+ const wardRows=[...wmap.values()].sort((a,b)=>a.zone.localeCompare(b.zone)||Number(a.wardNo)-Number(b.wardNo)),rimap=new Map();for(const w of wardRows){const k=`${w.zone}|${w.ri}`;let x=rimap.get(k);if(!x){x={zone:w.zone,ri:w.ri,post:w.post,applications:0,approved:0,inProcess:0,rejected:0,applicantPending:0,demand:0,receivedSummary:0,paidApplicants:0,receipts:0,collection:0,wards:0}}for(const f of ['applications','approved','inProcess','rejected','applicantPending','demand','receivedSummary','paidApplicants','receipts','collection'])x[f]+=num(w[f]);x.wards++;rimap.set(k,x)}
+ E.controls={city,zones};E.wardRows=wardRows;E.riRows=[...rimap.values()].sort((a,b)=>a.zone.localeCompare(b.zone)||a.ri.localeCompare(b.ri));E.unresolved=unresolved;
+ if(window.LOCAL){const pmap=E.paidMap||new Map();LOCAL.applications=(LOCAL.applications||[]).map(a=>{const pr=pmap.get(a['Application number']);if(!pr)return a;const rw=resolve(pr['Raw zone'],pr['Raw ward']),z=rw?.zone||rowZone(pr['Raw zone'],pr['Raw ward']);return{...a,'Allocated zone':z||'','Allocated ward':rw?.ward||pr['Raw ward']||'','Allocated RI / TC':rw?.ri||''}});LOCAL.payments=(LOCAL.payments||[]).map(p=>{const pr=pmap.get(p['Application number']);if(!pr)return p;const rw=resolve(pr['Raw zone'],pr['Raw ward']),z=rw?.zone||rowZone(pr['Raw zone'],pr['Raw ward']);return{...p,'Allocated zone':z||'','Allocated ward':rw?.ward||pr['Raw ward']||'','Allocated RI / TC':rw?.ri||''}})}
+ window.__tightMapStats={unresolvedRows:unresolved.length,unresolvedApps:unresolved.reduce((s,r)=>s+num(r.applications),0),mappedApps:wardRows.reduce((s,r)=>s+num(r.applications),0)};
+}
+window.otsTightResolve=resolve;
+window.processReportSet=async function(){const out=await oldProcess.apply(this,arguments);if(E.loaded){rebuild();if(window.renderAll)window.renderAll();const s=window.__tightMapStats;if(window.uploadMessage)uploadMessage(`Tight ward/RI reconciliation applied · ${s.mappedApps} applications safely mapped · ${s.unresolvedApps} source-only applications left unassigned (no guessing).`,true)}return out};
+window.processWorkbook=window.processReportSet;const submit=document.querySelector('#reportModal .btn.primary');if(submit)submit.onclick=window.processReportSet;
+})();
