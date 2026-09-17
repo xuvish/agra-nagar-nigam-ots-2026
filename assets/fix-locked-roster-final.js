@@ -28,6 +28,8 @@ add('Lohamandi','Shailendra Rathore','TC',[[27,'Ajeet Nagar'],[21,'Barah Khambha
 add('Lohamandi','Sanjay Mohan Kulshreshtha','TC',[[41,'Ajampada'],[77,'Kedar Nagar'],[10,'Prakash Nagar']]);
 PUBLIC.roster=rows;
 PUBLIC.ts={...(PUBLIC.ts||{}),Chhatta:'Sheetal Gupta',Hariparwat:'Akshay Kumar',Tajganj:'Rambabu',Lohamandi:'Rambabu'};
+window.__OTS_LOCKED_ROSTER=rows.map(r=>({...r}));
+window.__OTS_LOCKED_TS={...PUBLIC.ts};
 window.__OTS_LOCKED_ROSTER_VERSION='2026-09-18-final';
 console.log(`Locked OTS roster active · ${rows.length} wards`);
 })();
