@@ -16,24 +16,39 @@ function selectedZoneSafe(){try{return typeof selectedZone==='function'?selected
 function selectedAsOfSafe(){try{return typeof selectedAsOf==='function'?selectedAsOf():'latest'}catch(e){return'latest'}}
 function publicPayload(){return{snapshot:PUBLIC?.snapshot||'',city:PUBLIC?.city||{},zones:PUBLIC?.zones||{},cityDaily:PUBLIC?.cityDaily||[],zoneDaily:PUBLIC?.zoneDaily||{},cashiers:PUBLIC?.cashiers||[],zoneCashiers:PUBLIC?.zoneCashiers||{},crossZone:PUBLIC?.crossZone||[],roster:PUBLIC?.roster||[],workflowCity:PUBLIC?.workflowCity||{},stageByZone:PUBLIC?.stageByZone||{},workflowUnallocated:PUBLIC?.workflowUnallocated||{},paymentMetrics:PUBLIC?.paymentMetrics||null,riRows:PUBLIC?.riRows||[],wardRows:PUBLIC?.wardRows||[],meta:PUBLIC?.meta||{}}}
 function enginePayload(){if(!window.OTS7?.loaded)return null;try{return window.__buildSharedPayload?window.__buildSharedPayload(window.OTS7):null}catch(e){console.warn('Could not build local authority payload',e);return null}}
-function richPayload(){const L=safeLocal();return L?._finalRichVersion&&L?.payload?L.payload:null}
+function richRecord(){const L=safeLocal();if(L?._finalRichVersion&&L?.payload)return L;if(privateCache?._finalRichVersion&&privateCache?.payload)return privateCache;return null}
+function richPayload(){return richRecord()?.payload||null}
+function timeValue(v){const t=Date.parse(S(v));return Number.isFinite(t)?t:0}
+function sharedTime(){return timeValue(window.__otsSharedState?.updatedAt||window.__otsLastUpdatedAt||'')}
+function richWins(R,S){
+ if(!R?.payload)return false;
+ if(!S)return true;
+ const cmp=isoCmp(R.snapshot,S.snapshot);
+ if(cmp>0)return true;
+ if(cmp<0)return false;
+ return timeValue(R.loadedAt||R.updatedAt||'')>sharedTime();
+}
 function choosePayload(){
  const E=enginePayload();if(E){localPayload=E;return E}
- const R=richPayload();if(R)return R;
- if(window.SHARED_LIVE)return window.SHARED_LIVE;
+ const R=richRecord(),S=window.SHARED_LIVE;
+ if(R?.payload&&S)return richWins(R,S)?R.payload:S;
+ if(S)return S;
+ if(R?.payload)return R.payload;
  return publicPayload();
 }
 function mode(){
  if(window.OTS7?.loaded)return'loaded';
- const L=safeLocal();if(L?._finalRichVersion&&L?.payload){const shared=window.SHARED_LIVE?.snapshot||'';return shared&&isoCmp(L.snapshot,shared)>0?'local-pending':'private-cache'}
- if(window.SHARED_LIVE)return window.__otsSharedState?.source==='cache'?'shared-cache':'shared-live';
+ const R=richRecord(),S=window.SHARED_LIVE;
+ if(R?.payload&&S)return richWins(R,S)?'local-pending':(window.__otsSharedState?.source==='cache'?'shared-cache':'shared-live');
+ if(S)return window.__otsSharedState?.source==='cache'?'shared-cache':'shared-live';
+ if(R?.payload)return'private-cache';
  return'fallback';
 }
 function control(z){const p=choosePayload();return z==='All'?(p.city||{}):(p.zones?.[z]||{})}
 function daily(z){const p=choosePayload();return z==='All'?(p.cityDaily||[]):(p.zoneDaily?.[z]||[])}
 function collection(z){const d=daily(z),snap=choosePayload().snapshot||'',sel=selectedAsOfSafe(),asof=sel==='latest'?snap:sel,rows=d.filter(r=>!asof||S(r.date)<=asof),todayRow=rows.find(r=>S(r.date)===asof)||{};return{daily:rows,total:rows.reduce((s,r)=>s+N(r.amount),0),today:N(todayRow.amount),todayReceipts:N(todayRow.receipts),previous:rows.reduce((s,r)=>s+N(r.amount),0)-N(todayRow.amount),receipts:rows.reduce((s,r)=>s+N(r.receipts),0),asof}}
 function cashiers(z){const p=choosePayload();if(z==='All')return(p.cashiers||[]).map(r=>({name:r.name||r.cashier||'Unknown',receipts:N(r.receipts),amount:N(r.amount)}));return(p.zoneCashiers?.[z]||[]).map(r=>({name:r.name||r.cashier||'Unknown',receipts:N(r.receipts),amount:N(r.amount)}))}
-function detailSource(){if(window.OTS7?.loaded)return window.OTS7;const L=safeLocal();if(L?._finalRichVersion)return L;return null}
+function detailSource(){if(window.OTS7?.loaded)return window.OTS7;const p=choosePayload(),snap=S(p?.snapshot);const L=safeLocal();if(L?._finalRichVersion&&S(L.snapshot)===snap)return L;if(privateCache?._finalRichVersion&&S(privateCache.snapshot)===snap)return privateCache;return null}
 function applications(){const D=detailSource();return D?.apps||D?.applications||[]}
 function paidRows(){const D=detailSource();return D?.paidRows||[]}
 function payments(){const D=detailSource();return D?.payments||[]}
@@ -71,8 +86,24 @@ async function saveRich(){
 function openDb(){return new Promise((res,rej)=>{const q=indexedDB.open('AgraOTSNexus',1);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);q.onupgradeneeded=()=>{const d=q.result;if(!d.objectStoreNames.contains('snapshots'))d.createObjectStore('snapshots',{keyPath:'snapshot'})}})}
 async function readLatest(){if(restoring)return null;restoring=true;try{const d=await openDb();return await new Promise((res,rej)=>{const tx=d.transaction('snapshots','readonly'),q=tx.objectStore('snapshots').openCursor(null,'prev');q.onsuccess=()=>res(q.result?.value||null);q.onerror=()=>rej(q.error)})}catch(e){console.warn('Private snapshot restore unavailable',e);return null}finally{restoring=false}}
 async function restorePrivate(){
- const r=await readLatest();if(!r)return;privateCache=r;const sharedSnap=window.SHARED_LIVE?.snapshot||PUBLIC?.snapshot||'';
- if(r._finalRichVersion&&(!sharedSnap||isoCmp(r.snapshot,sharedSnap)>=0)){try{LOCAL=r}catch(e){};localPayload=r.payload||null;if(window.rebuildDateSelector)rebuildDateSelector();if(window.renderAll)window.renderAll();document.dispatchEvent(new CustomEvent('ots:authority-updated',{detail:sourceStatus()}))}
+ if(window.OTS7?.loaded){renderStatus();return}
+ const sharedState=window.__otsSharedState?.source||'loading';
+ if(sharedState==='loading'&&!window.SHARED_LIVE){setTimeout(restorePrivate,450);return}
+ const r=await readLatest();if(!r)return;privateCache=r;
+ if(!r._finalRichVersion||!r.payload){renderStatus();return}
+ const SLive=window.SHARED_LIVE;
+ if(richWins(r,SLive)){
+   try{LOCAL=r}catch(e){}
+   localPayload=r.payload||null;
+   if(window.rebuildDateSelector)rebuildDateSelector();
+   if(window.renderAll)window.renderAll();
+   document.dispatchEvent(new CustomEvent('ots:authority-updated',{detail:sourceStatus()}));
+ }else{
+   const L=safeLocal();
+   if(L?._finalRichVersion&&SLive&&isoCmp(L.snapshot,SLive.snapshot)<0){try{LOCAL=null}catch(e){}}
+   localPayload=null;
+   if(window.renderAll)window.renderAll();
+ }
  renderStatus();
 }
 function renderStatus(){
@@ -84,7 +115,7 @@ function installStyle(){if(document.getElementById('authorityIntegrityStyle'))re
 function wrapProcess(){if(window.__finalIntegrityProcessWrapped)return;const old=window.processReportSet||window.processWorkbook;if(typeof old!=='function')return;window.__finalIntegrityProcessWrapped=true;window.processReportSet=async function(){const out=await old.apply(this,arguments);if(window.OTS7?.loaded){await saveRich();if(window.renderAll)window.renderAll()}return out};window.processWorkbook=window.processReportSet;const submit=document.querySelector('#reportModal .btn.primary');if(submit)submit.onclick=window.processReportSet}
 function refresh(){installStyle();wrapProcess();renderStatus()}
 let tries=0;const timer=setInterval(()=>{tries++;refresh();if(window.__finalIntegrityProcessWrapped||tries>100)clearInterval(timer)},100);
-window.addEventListener('load',()=>{refresh();setTimeout(restorePrivate,350);setTimeout(renderStatus,1200)});
-document.addEventListener('ots:shared-applied',()=>{setTimeout(restorePrivate,60);setTimeout(renderStatus,120)});
-document.addEventListener('ots:shared-failed',()=>setTimeout(renderStatus,50));
+window.addEventListener('load',()=>{refresh();setTimeout(restorePrivate,500);setTimeout(renderStatus,1200)});
+document.addEventListener('ots:shared-applied',()=>{setTimeout(restorePrivate,120);setTimeout(renderStatus,160)});
+document.addEventListener('ots:shared-failed',()=>{setTimeout(restorePrivate,120);setTimeout(renderStatus,180)});
 })();
