@@ -44,3 +44,4 @@
   }
   renderZones();
 })();
+(function(){const s=document.createElement('script');s.src='assets/fix-point3.js?v=20260917-0825';s.onload=()=>{if(window.renderAll)renderAll()};document.body.appendChild(s)})();
