@@ -1,0 +1,11 @@
+/* Prevent stale fallback figures from flashing before the authoritative bootstrap finishes. */
+body.ots-booting .toolbar,
+body.ots-booting .kpis,
+body.ots-booting .nav,
+body.ots-booting .panel,
+body.ots-booting .footer{visibility:hidden!important;opacity:0!important;pointer-events:none!important}
+.ots-boot-loader{margin:16px 0;padding:18px 20px;border:1px solid #d6e4ee;border-radius:18px;background:linear-gradient(135deg,#eef8ff,#f7fcff 48%,#eefaf4);box-shadow:0 10px 28px rgba(44,76,106,.07);display:flex;align-items:center;gap:12px;color:#2d5877;font-size:12px;font-weight:800}
+.ots-boot-loader:before{content:"";width:17px;height:17px;border:2px solid #b9d5e8;border-top-color:#2e6f98;border-radius:50%;animation:otsBootSpin .8s linear infinite}
+body:not(.ots-booting) .ots-boot-loader{display:none!important}
+@keyframes otsBootSpin{to{transform:rotate(360deg)}}
+@media print{.ots-boot-loader{display:none!important}}
