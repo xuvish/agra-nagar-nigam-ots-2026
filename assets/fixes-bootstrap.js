@@ -33,17 +33,13 @@
                     }
                     load('assets/fix-admin-live.js?v=20260917-1310',()=>
                       load('assets/fix-smart-upload.js?v=20260917-1722',()=>
-                        load('assets/fix-mapper-v4.js?v=20260917-1608',()=>
-                          load('assets/fix-mapper-v5.js?v=20260917-1638',()=>
-                            load('assets/fix-mapper-v6-final.js?v=20260917-1805',()=>
-                              load('assets/fix-shared-live.js?v=20260917-1730',()=>{
-                                window.processWorkbook=window.processReportSet;
-                                const submit=document.querySelector('#reportModal .btn.primary');
-                                if(submit) submit.onclick=window.processReportSet;
-                                if(window.renderAll) window.renderAll();
-                              })
-                            )
-                          )
+                        load('assets/fix-tight-mapper.js?v=20260917-1925',()=>
+                          load('assets/fix-shared-live.js?v=20260917-1730',()=>{
+                            window.processWorkbook=window.processReportSet;
+                            const submit=document.querySelector('#reportModal .btn.primary');
+                            if(submit) submit.onclick=window.processReportSet;
+                            if(window.renderAll) window.renderAll();
+                          })
                         )
                       )
                     );
