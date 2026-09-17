@@ -6,7 +6,7 @@
     s.onerror=()=>console.error('Failed to load',src);
     document.body.appendChild(s);
   }
-  load('assets/fix-locked-roster-final.js?v=20260918-0512-roster-v2',()=>
+  load('assets/fix-locked-roster-final.js?v=20260918-0520-roster-v3',()=>
    load('assets/fix-excel-date-local.js?v=20260917-2340-v1',()=>
     load('assets/fix-point1.js?v=20260917-0900',()=>{
       let tries=0;
@@ -42,12 +42,14 @@
                                           load('assets/fix-property-contact-multiformat.js?v=20260918-0132-v1',()=>
                                             load('assets/fix-property-master-main-uploader.js?v=20260918-0152-direct-v2',()=>
                                               load('assets/fix-final-dashboard-integrity.js?v=20260918-0438-integrity-v1',()=>
-                                                load('assets/fix-legacy-stage-safety.js?v=20260918-0458-stage-v1',()=>{
-                                                  window.__OTS_BOOTSTRAP_READY=true;
-                                                  window.processWorkbook=window.processReportSet;
-                                                  if(window.renderAll)window.renderAll();
-                                                  document.dispatchEvent(new CustomEvent('ots:bootstrap-ready'));
-                                                })
+                                                load('assets/fix-legacy-stage-safety.js?v=20260918-0458-stage-v1',()=>
+                                                  load('assets/fix-roster-postlive-safety.js?v=20260918-0520-roster-safety-v1',()=>{
+                                                    window.__OTS_BOOTSTRAP_READY=true;
+                                                    window.processWorkbook=window.processReportSet;
+                                                    if(window.renderAll)window.renderAll();
+                                                    document.dispatchEvent(new CustomEvent('ots:bootstrap-ready'));
+                                                  })
+                                                )
                                               )
                                             )
                                           )
