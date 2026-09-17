@@ -31,7 +31,9 @@
                       const submit=document.querySelector('#reportModal .btn.primary');
                       if(submit) submit.onclick=window.processReportSet;
                     }
-                    if(window.renderAll) window.renderAll();
+                    load('assets/fix-admin-live.js?v=20260917-1310',()=>{
+                      if(window.renderAll) window.renderAll();
+                    });
                   })
                 )
               );
