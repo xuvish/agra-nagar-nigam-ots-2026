@@ -33,7 +33,7 @@
                     }
                     load('assets/fix-admin-live.js?v=20260917-1310',()=>
                       load('assets/fix-smart-upload.js?v=20260917-1722',()=>
-                        load('assets/fix-collection-integrity.js?v=20260917-2045-v1',()=>
+                        load('assets/fix-collection-integrity.js?v=20260917-2055-v2',()=>
                           load('assets/fix-tight-mapper.js?v=20260917-2010-v2',()=>
                             load('assets/fix-unresolved-allocation.js?v=20260917-2025-v1',()=>
                               load('assets/fix-shared-live.js?v=20260917-2015-v2',()=>{
