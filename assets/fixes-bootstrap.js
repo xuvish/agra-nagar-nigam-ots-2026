@@ -33,7 +33,7 @@
                     }
                     load('assets/fix-admin-live.js?v=20260917-1310',()=>
                       load('assets/fix-smart-upload.js?v=20260917-1722',()=>
-                        load('assets/fix-tight-mapper.js?v=20260917-1925',()=>
+                        load('assets/fix-tight-mapper.js?v=20260917-2010-v2',()=>
                           load('assets/fix-shared-live.js?v=20260917-1730',()=>{
                             window.processWorkbook=window.processReportSet;
                             const submit=document.querySelector('#reportModal .btn.primary');
