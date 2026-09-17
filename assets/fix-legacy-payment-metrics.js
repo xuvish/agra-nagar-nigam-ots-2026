@@ -1,0 +1,5 @@
+(function(){
+'use strict';
+function install(){const A=window.OTS_AUTHORITY;if(!A||A.__legacyPaymentSafe)return false;A.__legacyPaymentSafe=true;const old=A.control.bind(A);A.control=function(z){const c={...(old(z)||{})};if(z!=='All'||c.fullPaidApproved!=null)return c;const p=A.payload?.()||{},m=p.meta||{},full=m.fullPaymentRows??m.sourceAuthority?.fullPaymentRows,part=m.partPaymentRows??m.sourceAuthority?.partPaymentRows;if(full==null||part==null)return c;const started=Number(c.paymentStartedApproved??c.payingApps)||0;if(Number(full)+Number(part)===started){c.fullPaidApproved=Number(full);c.partPaidApproved=Number(part);c.paymentStartedApproved=started;c.paymentPendingApproved=Math.max(0,(Number(c.approved)||0)-started);c.__legacyPaymentRecovered=true}return c};window.currentControl=function(z){return A.control(z)};if(window.renderAll)window.renderAll();return true}
+let t=0;const x=setInterval(()=>{t++;if(install()||t>120)clearInterval(x)},100);document.addEventListener('ots:authority-updated',install);document.addEventListener('ots:shared-applied',install);
+})();
