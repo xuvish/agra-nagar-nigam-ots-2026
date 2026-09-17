@@ -48,9 +48,13 @@ function sync(){
  };
  main.addEventListener('change',()=>{
    const files=[...main.files];
-   if(isMasterSet(files))enterMasterMode(); else normalSubmit();
+   if(isMasterSet(files)){
+     enterMasterMode();
+     setTimeout(enterMasterMode,0);
+     setTimeout(enterMasterMode,120);
+   }else normalSubmit();
  },true);
- if(isMasterSet([...main.files]))enterMasterMode();
+ if(isMasterSet([...main.files]))setTimeout(enterMasterMode,0);
  return true;
 }
 let tries=0;const t=setInterval(()=>{tries++;if(sync()||tries>80)clearInterval(t)},100);
