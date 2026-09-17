@@ -4,7 +4,7 @@
 const DB_NAME='ots_property_contact_master_v1';
 const DB_VERSION=1;
 const STORE='properties';
-const META_KEY='ots_property_contact_master_meta_v1';
+const META_KEY='ots_property_contact_master_meta_v2';
 const AUTH_KEY='ots_admin_session_v1';
 const ZONES=['Chhatta','Hariparwat','Tajganj','Lohamandi'];
 const N=v=>String(v??'').trim();
@@ -14,6 +14,9 @@ const normHouse=v=>N(v).toUpperCase().replace(/[^A-Z0-9]/g,'');
 const digits=v=>N(v).replace(/\D/g,'');
 const validMobile=v=>{const d=digits(v);return d.length===10&&/^[6-9]/.test(d)?d:''};
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uniq=a=>[...new Set((a||[]).filter(Boolean))];
+const mobileList=r=>uniq([...(Array.isArray(r?.mobiles)?r.mobiles:[]),...N(r?.mobile).split(/[\/|,;]+/).map(validMobile)]);
+const mobileText=r=>mobileList(r).join(' / ');
 
 function zoneFromFile(name){
  const s=norm(name).replace(/\s/g,'');
@@ -82,9 +85,10 @@ function rosterRI(zone,wardNo,wardName,propertyId){
  return rows.length===1?rows[0].ri:'';
 }
 function mergeRecord(old,r){
- if(!old)return r;
- const a=old.mobile,b=r.mobile;
- if(a&&b&&a!==b){old.mobile='';old.mobileConflict=true}else if(!a&&b&&!old.mobileConflict)old.mobile=b;
+ if(!old){r.mobiles=mobileList(r);r.mobile=r.mobiles.join(' / ');r.mobileConflict=r.mobiles.length>1;return r}
+ old.mobiles=uniq([...mobileList(old),...mobileList(r)]);
+ old.mobile=old.mobiles.join(' / ');
+ old.mobileConflict=old.mobiles.length>1;
  for(const k of ['owner','houseNo','address','popularName','wardName','mohalla'])if(!old[k]&&r[k])old[k]=r[k];
  if(!old.ri&&r.ri)old.ri=r.ri;
  return old;
@@ -93,27 +97,30 @@ async function parseMasterFile(file,zone,status){
  const text=await file.text(),marker='S.No.,"Property ID"',at=text.indexOf(marker);
  if(at<0)throw Error(`${file.name}: Corporate Ward Wise property header not found`);
  const csv=text.slice(at),wb=XLSX.read(csv,{type:'string',raw:true}),sh=wb.Sheets[wb.SheetNames[0]],rows=XLSX.utils.sheet_to_json(sh,{defval:'',raw:false});
- const map=new Map();let validMobiles=0,rawRows=0;
+ const map=new Map();let rawRows=0;
  for(const x of rows){
    const pid=normId(x['Property ID']);if(!pid)continue;rawRows++;
    const wardNo=Number(String(x['Corporate Ward No.']||'').replace(/\D/g,''))||null,wardName=N(x['Corporate Name']),houseNo=N(x['House No.']),hn=normHouse(houseNo),mobile=validMobile(x.Mobile);
-   if(mobile)validMobiles++;
-   const r={key:`${zone}|${pid}`,zone,propertyId:pid,propertyIdRaw:N(x['Property ID']),wardNo,wardName,mohalla:N(x['Corporate Mohalla']),owner:N(x['Owner Name']),houseNo,houseNorm:hn,houseKey:hn?`${zone}|${hn}`:'',wardKey:wardNo?`${zone}|${wardNo}`:'',mobile,mobileConflict:false,address:N(x.Address),popularName:N(x['Popular Name']),dueAmount:Number(String(x['Due Amount']||'0').replace(/,/g,''))||0,ri:rosterRI(zone,wardNo,wardName,pid)};
+   const r={key:`${zone}|${pid}`,zone,propertyId:pid,propertyIdRaw:N(x['Property ID']),wardNo,wardName,mohalla:N(x['Corporate Mohalla']),owner:N(x['Owner Name']),houseNo,houseNorm:hn,houseKey:hn?`${zone}|${hn}`:'',wardKey:wardNo?`${zone}|${wardNo}`:'',mobile,mobiles:mobile?[mobile]:[],mobileConflict:false,address:N(x.Address),popularName:N(x['Popular Name']),dueAmount:Number(String(x['Due Amount']||'0').replace(/,/g,''))||0,ri:rosterRI(zone,wardNo,wardName,pid)};
    map.set(r.key,mergeRecord(map.get(r.key),r));
  }
- const records=[...map.values()];status&&status(`${zone}: parsed ${records.length.toLocaleString('en-IN')} unique properties · ${(records.filter(r=>r.mobile).length).toLocaleString('en-IN')} with valid mobile`);
- return{records,rawRows,validMobiles,unique:records.length,mobileUnique:records.filter(r=>r.mobile).length,mobileConflicts:records.filter(r=>r.mobileConflict).length};
+ const records=[...map.values()];
+ const withContacts=records.filter(r=>mobileList(r).length).length;
+ const contactNumbers=records.reduce((s,r)=>s+mobileList(r).length,0);
+ const multiMobile=records.filter(r=>mobileList(r).length>1).length;
+ status&&status(`${zone}: parsed ${records.length.toLocaleString('en-IN')} unique properties · ${withContacts.toLocaleString('en-IN')} properties with mobile · ${contactNumbers.toLocaleString('en-IN')} distinct numbers`);
+ return{records,rawRows,unique:records.length,withContacts,contactNumbers,multiMobile};
 }
 
 function meta(){try{return JSON.parse(localStorage.getItem(META_KEY)||'null')}catch(e){return null}}
 function setMeta(v){localStorage.setItem(META_KEY,JSON.stringify(v))}
-function metaText(){const m=meta();if(!m)return'Not loaded in this browser';return`${Number(m.properties||0).toLocaleString('en-IN')} properties · ${Number(m.mobiles||0).toLocaleString('en-IN')} full mobiles · loaded ${new Date(m.loadedAt).toLocaleString('en-IN')}`}
+function metaText(){const m=meta();if(!m)return'Not loaded in this browser — reload the 4 zone CSVs once for multi-mobile support';return`${Number(m.properties||0).toLocaleString('en-IN')} properties · ${Number(m.contactNumbers||0).toLocaleString('en-IN')} distinct mobile numbers · loaded ${new Date(m.loadedAt).toLocaleString('en-IN')}`}
 
 function injectUI(){
  const modal=document.getElementById('reportModal');if(!modal||document.getElementById('propertyMasterPanel'))return;
  const anchor=document.getElementById('reportChecklist')||modal.querySelector('.drop');if(!anchor)return;
  const panel=document.createElement('div');panel.id='propertyMasterPanel';panel.className='notice';panel.style.cssText='margin-top:10px;padding:12px';
- panel.innerHTML=`<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><div><b>PRIVATE PROPERTY CONTACT MASTER</b><div style="font-size:10px;color:#87a6b9;margin-top:4px">One-time per browser: Chhatta + Hariparwat + Tajganj + Lohamandi CSVs. Used only for exact property/house matching, full mobile and calling-zone enrichment. Never published to GitHub/Supabase.</div></div><button class="btn" id="propertyMasterChoose" type="button">Load / Replace 4 Zone CSVs</button></div><input id="propertyMasterFiles" type="file" accept=".csv" multiple style="display:none"><div id="propertyMasterStatus" style="font-size:10px;margin-top:8px;color:#b8d3e3">${esc(metaText())}</div>`;
+ panel.innerHTML=`<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><div><b>PRIVATE PROPERTY CONTACT MASTER</b><div style="font-size:10px;color:#87a6b9;margin-top:4px">One-time per browser: Chhatta + Hariparwat + Tajganj + Lohamandi CSVs. All distinct source mobile numbers for a matched property are retained and shown in the calling list. Never published to GitHub/Supabase.</div></div><button class="btn" id="propertyMasterChoose" type="button">Load / Replace 4 Zone CSVs</button></div><input id="propertyMasterFiles" type="file" accept=".csv" multiple style="display:none"><div id="propertyMasterStatus" style="font-size:10px;margin-top:8px;color:#b8d3e3">${esc(metaText())}</div>`;
  anchor.insertAdjacentElement('afterend',panel);
  const input=panel.querySelector('#propertyMasterFiles'),btn=panel.querySelector('#propertyMasterChoose');btn.onclick=()=>input.click();input.onchange=()=>importMaster([...input.files]);
 }
@@ -125,13 +132,14 @@ async function importMaster(files){
    if(files.length!==4)throw Error('Select exactly 4 zone CSVs: Chhatta, Hariparwat, Tajganj and Lohamandi.');
    const by={};for(const f of files){const z=zoneFromFile(f.name);if(!z)throw Error(`Cannot identify zone from file name: ${f.name}`);if(by[z])throw Error(`Two files detected for ${z}`);by[z]=f}
    for(const z of ZONES)if(!by[z])throw Error(`${z} CSV is missing`);
-   status('Preparing private Property Contact Master…');await clearDB();let total=0,mobiles=0,conflicts=0;
+   status('Preparing private Property Contact Master…');await clearDB();let total=0,withContacts=0,contactNumbers=0,multiMobile=0;
    for(const z of ZONES){
      status(`Reading ${z} property master…`);const parsed=await parseMasterFile(by[z],z,msg=>status(msg));
      await putBatches(parsed.records,(done,all)=>status(`${z}: saving ${done.toLocaleString('en-IN')} / ${all.toLocaleString('en-IN')} properties…`));
-     total+=parsed.unique;mobiles+=parsed.mobileUnique;conflicts+=parsed.mobileConflicts;
+     total+=parsed.unique;withContacts+=parsed.withContacts;contactNumbers+=parsed.contactNumbers;multiMobile+=parsed.multiMobile;
    }
-   const m={version:1,loadedAt:new Date().toISOString(),properties:total,mobiles,conflicts,zones:ZONES};setMeta(m);status(`READY · ${total.toLocaleString('en-IN')} properties · ${mobiles.toLocaleString('en-IN')} full mobiles · ${conflicts.toLocaleString('en-IN')} duplicate-mobile conflicts withheld`);
+   const m={version:2,loadedAt:new Date().toISOString(),properties:total,withContacts,contactNumbers,multiMobile,zones:ZONES};setMeta(m);
+   status(`READY · ${total.toLocaleString('en-IN')} properties · ${contactNumbers.toLocaleString('en-IN')} distinct mobile numbers retained · ${multiMobile.toLocaleString('en-IN')} properties have multiple numbers`);
    window.__propertyMasterEnrichedKey='';await enrichLocal(true);
  }catch(e){console.error(e);status(e.message||String(e),true)}
 }
@@ -149,27 +157,35 @@ async function enrichLocal(force=false){
  const m=meta();if(!m||typeof LOCAL==='undefined'||!LOCAL||!Array.isArray(LOCAL.applications))return null;
  const sig=`${LOCAL.snapshot||''}|${LOCAL.applications.length}|${m.loadedAt}`;if(!force&&window.__propertyMasterEnrichedKey===sig)return window.__propertyMasterLastStats||null;
  const apps=LOCAL.applications,ctx=apps.map((a,i)=>({i,a,pid:normId(a['Property UID']||a['Property ID']||a['Master property ID']),house:normHouse(a['House / property no.']||a['House No.']),zone:currentZoneHint(a)}));
- const byProp=await multiLookup('propertyId',ctx.map(x=>x.pid));const unmatched=[];let matched=0,withMobile=0,byId=0,byHouse=0;
+ const byProp=await multiLookup('propertyId',ctx.map(x=>x.pid));const unmatched=[];let matched=0,withMobile=0,totalNumbers=0,byId=0,byHouse=0;
  for(const x of ctx){if(!x.pid){unmatched.push(x);continue}const r=pickCandidate(byProp.get(x.pid),x.a,x.zone);if(r){x.match=r;x.basis='Property ID exact';byId++}else unmatched.push(x)}
  const houseKeys=unmatched.filter(x=>x.house&&x.zone).map(x=>`${x.zone}|${x.house}`),byHouseKey=await multiLookup('houseKey',houseKeys);
  for(const x of unmatched){if(x.match||!x.house||!x.zone)continue;const r=pickCandidate(byHouseKey.get(`${x.zone}|${x.house}`),x.a,x.zone);if(r){x.match=r;x.basis='House No + Calling Zone exact';byHouse++}}
- for(const x of ctx){const r=x.match;if(!r)continue;matched++;const a=x.a;
+ for(const x of ctx){const r=x.match;if(!r)continue;matched++;const a=x.a,phones=mobileList(r),phoneText=phones.join(' / ');
    a['Property Master match']=x.basis;a['Master property ID']=r.propertyIdRaw||r.propertyId;a['Master owner']=r.owner;a['Master address']=r.address;a['Master popular name']=r.popularName;a['Contact zone']=r.zone;a['Contact ward no']=r.wardNo;a['Contact ward']=r.wardName;a['Contact RI']=r.ri||'';a['Property master due']=r.dueAmount||0;
    a['Allocated zone']=r.zone;a['Allocated ward']=r.wardNo?`${r.wardNo} ${r.wardName}`:r.wardName;a['Allocated RI / TC']=r.ri||a['Allocated RI / TC']||'';a['Allocation basis']=`Property Contact Master · ${x.basis}`;a['Calling zone']=r.zone;a['Calling basis']=`Property Contact Master · ${x.basis}`;
-   if(r.mobile&&!r.mobileConflict){a['Contact mobile']=r.mobile;a['Mobile No.']=r.mobile;withMobile++}
+   if(phoneText){a['Contact mobile']=phoneText;a['Contact mobiles']=phones;a['Mobile No.']=phoneText;withMobile++;totalNumbers+=phones.length}
    if(!N(a['Applicant / owner'])&&r.owner)a['Applicant / owner']=r.owner;
  }
- window.__propertyMasterEnrichedKey=sig;const st={total:apps.length,matched,withMobile,byId,byHouse,unmatched:apps.length-matched};window.__propertyMasterLastStats=st;
- status(`READY · ${m.properties.toLocaleString('en-IN')} master properties · current OTS: ${matched.toLocaleString('en-IN')} property matches · ${withMobile.toLocaleString('en-IN')} full mobiles recovered`);
+ window.__propertyMasterEnrichedKey=sig;const st={total:apps.length,matched,withMobile,totalNumbers,byId,byHouse,unmatched:apps.length-matched};window.__propertyMasterLastStats=st;
+ status(`READY · ${m.properties.toLocaleString('en-IN')} master properties · current OTS: ${matched.toLocaleString('en-IN')} property matches · ${withMobile.toLocaleString('en-IN')} applicants with contact · ${totalNumbers.toLocaleString('en-IN')} numbers available`);
  if(window.renderAll)window.renderAll();return st;
 }
 
 function ensureFollowupHeader(){const tr=document.querySelector('#followup thead tr');if(tr)tr.innerHTML='<th>Application</th><th>Applicant / Owner</th><th>Mobile</th><th>Property ID</th><th>House No.</th><th>Calling Zone</th><th>Ward</th><th>RI</th><th>Approved On</th><th>Status</th>'}
-function linkPhones(){ensureFollowupHeader();for(const tr of document.querySelectorAll('#followBody tr')){const td=tr.children?.[2];if(!td)continue;const d=digits(td.textContent);if(d.length===10&&/^[6-9]/.test(d))td.innerHTML=`<a href="tel:${d}" style="color:#8affdf;text-decoration:none;font-weight:700">${d}</a>`}}
+function linkPhones(){
+ ensureFollowupHeader();
+ for(const tr of document.querySelectorAll('#followBody tr')){
+   const td=tr.children?.[2];if(!td)continue;
+   const raw=N(td.textContent);if(!raw||raw==='—')continue;
+   const phones=uniq(raw.split(/[\/|,;]+/).map(validMobile).filter(Boolean));
+   if(phones.length)td.innerHTML=phones.map(d=>`<a href="tel:${d}" style="color:#8affdf;text-decoration:none;font-weight:700;white-space:nowrap">${d}</a>`).join('<br>');
+ }
+}
 const OLD_FOLLOW=window.renderFollowup;window.renderFollowup=function(){const r=OLD_FOLLOW&&OLD_FOLLOW.apply(this,arguments);setTimeout(linkPhones,0);return r};
 const OLD_PROCESS=window.processReportSet||window.processWorkbook;window.processReportSet=async function(){const out=await OLD_PROCESS.apply(this,arguments);window.__propertyMasterEnrichedKey='';setTimeout(()=>enrichLocal(true),50);return out};window.processWorkbook=window.processReportSet;const submit=document.querySelector('#reportModal .btn.primary');if(submit)submit.onclick=window.processReportSet;
 window.__applyPropertyContactMaster=()=>enrichLocal(true);window.__propertyContactMasterMeta=()=>meta();
 
 injectUI();setTimeout(injectUI,250);setTimeout(()=>enrichLocal(false),700);
-console.log('Private Property Contact Master engine active');
+console.log('Private Property Contact Master engine active · multi-mobile enabled');
 })();
