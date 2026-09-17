@@ -7,8 +7,9 @@ const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov',
 const N=v=>String(v??'').trim();
 function local(){try{return (typeof LOCAL!=='undefined'&&LOCAL)?LOCAL:null}catch(e){return null}}
 function pub(){try{return (typeof PUBLIC!=='undefined'&&PUBLIC)?PUBLIC:null}catch(e){return null}}
-function snapshot(){const L=local(),P=pub();return N(L?.snapshot||L?.snapshotDate||L?.meta?.snapshot||window.SHARED_LIVE?.snapshot||P?.snapshot||P?.snapshotDate||P?.meta?.snapshot)}
-function city(){const L=local(),P=pub();return L?.city||L?.controls?.city||window.SHARED_LIVE?.city||P?.city||{}}
+function authorityPayload(){try{return window.OTS_AUTHORITY?.payload?.()||null}catch(e){return null}}
+function snapshot(){const A=authorityPayload(),L=local(),P=pub();return N(A?.snapshot||window.SHARED_LIVE?.snapshot||L?.snapshot||L?.snapshotDate||L?.meta?.snapshot||P?.snapshot||P?.snapshotDate||P?.meta?.snapshot)}
+function city(){const A=authorityPayload(),L=local(),P=pub();return A?.city||window.SHARED_LIVE?.city||L?.city||L?.controls?.city||P?.city||{}}
 function fingerprint(){const L=local(),c=city();return [snapshot(),c.applications??L?.applications?.length??'',c.approved??'',c.inProcess??'',c.collection??'',c.receipts??L?.payments?.length??''].join('|')}
 function fmtDate(v){const m=N(v).match(/(\d{4})-(\d{2})-(\d{2})/);return m?`${Number(m[3])} ${months[Number(m[2])-1]} ${m[1]}`:(N(v)||'—')}
 function fmtStamp(v){if(!v)return'—';const d=new Date(v);if(Number.isNaN(d.getTime()))return N(v);let h=d.getHours(),amp=h>=12?'PM':'AM';h=h%12||12;return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}, ${h}:${String(d.getMinutes()).padStart(2,'0')} ${amp}`}
