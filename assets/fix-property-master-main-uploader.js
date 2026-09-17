@@ -30,20 +30,45 @@ function sync(){
  const modal=document.getElementById('reportModal');
  const submit=modal?.querySelector('.btn.primary');
  if(!main||!hidden||!submit)return false;
- if(main.dataset.masterBridge==='1')return true;
- main.dataset.masterBridge='1';
- const normalSubmit=()=>{window.__otsPropertyMasterMode=false;submit.textContent='Submit Reports & Recalculate';submit.onclick=window.processReportSet||window.processWorkbook;};
+ if(main.dataset.masterBridge==='2')return true;
+ main.dataset.masterBridge='2';
+ const normalSubmit=()=>{
+   window.__otsPropertyMasterMode=false;
+   submit.disabled=false;
+   submit.textContent='Submit Reports & Recalculate';
+   submit.onclick=window.processReportSet||window.processWorkbook;
+ };
  const enterMasterMode=()=>{
    window.__otsPropertyMasterMode=true;
+   submit.disabled=false;
    submit.textContent='Import 4 Property Master CSVs';
    setMessage('<b>PROPERTY CONTACT MASTER READY</b><br>Chhatta + Hariparwat + Tajganj + Lohamandi recognized. Click <b>Import 4 Property Master CSVs</b>. These are not daily OTS reports.');
    submit.onclick=async function(ev){
      ev?.preventDefault?.();
+     ev?.stopPropagation?.();
      const files=[...main.files];
-     if(!isMasterSet(files))return normalSubmit();
-     copyFiles(files,hidden);
-     setMessage('<b>IMPORTING PRIVATE PROPERTY CONTACT MASTER…</b><br>Please keep this window open. Progress will appear in the Property Contact Master box below.');
-     hidden.dispatchEvent(new Event('change',{bubbles:true}));
+     if(!isMasterSet(files)){normalSubmit();return;}
+     submit.disabled=true;
+     submit.textContent='Importing Property Master…';
+     setMessage('<b>IMPORTING PRIVATE PROPERTY CONTACT MASTER…</b><br>Reading and saving about 3.26 lakh properties. Please keep this window open. Progress appears below.');
+     try{
+       copyFiles(files,hidden);
+       if(typeof hidden.onchange==='function'){
+         const result=hidden.onchange.call(hidden,new Event('change'));
+         if(result&&typeof result.then==='function')await result;
+       }else{
+         hidden.dispatchEvent(new Event('change',{bubbles:true}));
+       }
+       setTimeout(()=>{
+         submit.disabled=false;
+         submit.textContent='Import 4 Property Master CSVs';
+       },500);
+     }catch(err){
+       console.error('Property Master import bridge failed',err);
+       setMessage(`<b>PROPERTY MASTER IMPORT ERROR</b><br>${String(err?.message||err)}`);
+       submit.disabled=false;
+       submit.textContent='Import 4 Property Master CSVs';
+     }
    };
  };
  main.addEventListener('change',()=>{
@@ -58,5 +83,5 @@ function sync(){
  return true;
 }
 let tries=0;const t=setInterval(()=>{tries++;if(sync()||tries>80)clearInterval(t)},100);
-console.log('Property Master main-uploader bridge active');
+console.log('Property Master main-uploader bridge active · direct importer');
 })();
