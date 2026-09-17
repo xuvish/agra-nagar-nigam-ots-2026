@@ -1,5 +1,6 @@
 (function(){
 'use strict';
+window.__OFFICER_UI_ACTIVE=true;
 const $=id=>document.getElementById(id);
 const ZONES=['Chhatta','Hariparwat','Tajganj','Lohamandi'];
 const LIVE_URL='https://pdtongvzntgvwnkhkxti.supabase.co/functions/v1/ots-live';
@@ -53,9 +54,12 @@ function magnifierSvg(){return'<svg viewBox="0 0 24 24" fill="none" aria-hidden=
 function calendarSvg(){return'<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.2" stroke-width="1.6"></rect><path d="M7.5 3.5V7M16.5 3.5V7M3.8 9h16.4" stroke-width="1.6" stroke-linecap="round"></path></svg>'}
 function setupToolbar(){
  const toolbar=document.querySelector('.toolbar'),search=$('search'),zone=$('zone'),asof=$('asof');if(!toolbar||!search||!zone||!asof)return;
+ asof.style.setProperty('display','none','important');asof.setAttribute('aria-hidden','true');asof.tabIndex=-1;
+ zone.style.removeProperty('background');zone.style.removeProperty('color');
  let wrap=search.closest('.search-wrap');if(!wrap){wrap=document.createElement('div');wrap.className='search-wrap';search.parentNode.insertBefore(wrap,search);wrap.appendChild(search)}
  let btn=wrap.querySelector('.search-inside');if(!btn){btn=document.createElement('button');btn.type='button';btn.className='search-inside';btn.setAttribute('aria-label','Search');wrap.appendChild(btn)}btn.innerHTML=magnifierSvg();btn.title='Search dashboard';
  if(!$('liveDateControl')){const c=document.createElement('div');c.id='liveDateControl';c.className='live-date-control';c.innerHTML=`<div class="live-date-copy"><small>${state.historyPayload?'Historical report':'Today · live time'}</small><b id="liveClockText">${nowText()}</b></div><button type="button" class="calendar-trigger" aria-label="Open report calendar">${calendarSvg()}</button><div class="report-calendar-pop" id="reportCalendarPop"><h4>Open report by date</h4><p>Only dates with a saved/published OTS snapshot can open as a full historical report.</p><input type="date" id="reportCalendarDate"><div class="calendar-actions"><button type="button" id="calendarLive">Back to Live</button><button type="button" class="primary" id="calendarOpen">Open Report</button></div><div class="calendar-msg" id="calendarMsg"></div></div>`;toolbar.appendChild(c);c.querySelector('.calendar-trigger').onclick=e=>{e.stopPropagation();$('reportCalendarPop')?.classList.toggle('open');loadHistoryDates()};$('calendarOpen').onclick=()=>openHistoricalDate($('reportCalendarDate')?.value);$('calendarLive').onclick=()=>leaveHistory();document.addEventListener('click',e=>{if(!c.contains(e.target))$('reportCalendarPop')?.classList.remove('open')})}
+ const liveControl=$('liveDateControl');if(liveControl&&liveControl.parentNode!==toolbar)toolbar.appendChild(liveControl);
 }
 async function loadHistoryDates(){
  const msg=$('calendarMsg'),input=$('reportCalendarDate');if(!msg||!input)return;msg.className='calendar-msg';msg.textContent='Checking available report dates…';
@@ -110,6 +114,29 @@ function intercept(){
  document.addEventListener('click',e=>{const sb=e.target.closest('.search-inside');if(sb){e.preventDefault();e.stopImmediatePropagation();showSearch();return}const card=e.target.closest('[data-detail-key],.exec-payment-done,.zone-card');if(!card)return;let key=card.dataset.detailKey||'';if(card.classList.contains('exec-payment-done'))key='paymentdone';if(card.classList.contains('zone-card'))key='zone';if(!['paymentdone','paymentpending','today','zone'].includes(key))return;e.preventDefault();e.stopImmediatePropagation();if(key==='paymentdone')showPaymentOverview('done');else if(key==='paymentpending')showPaymentOverview('pending');else if(key==='today')showToday();else if(key==='zone'){const z=card.dataset.detailContext||card.querySelector('.zone-title b')?.textContent?.trim();if(z)showZone(z)}},true);
  document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target===$('search')){e.preventDefault();e.stopImmediatePropagation();showSearch()}},true)
 }
-function install(){wrapAuthority();setupLiveStrip();setupToolbar();decorateSelectedDate()}
-let installed=false,tries=0;const timer=setInterval(()=>{tries++;install();if(!installed&&$('search')){intercept();installed=true}if(tries>200)clearInterval(timer)},120);window.addEventListener('load',()=>{install();setTimeout(install,600)});document.addEventListener('ots:authority-updated',()=>setTimeout(install,30));document.addEventListener('ots:shared-applied',()=>setTimeout(install,30));setInterval(()=>{setupLiveStrip();decorateSelectedDate()},1000);
+function leaveHistoryForFreshData(){
+ state.historyPayload=null;state.historyDate=null;state.historyUpdatedAt=null;
+ const a=$('asof');if(a)a.value='latest';
+ $('reportCalendarPop')?.classList.remove('open');
+}
+function wrapUpload(){
+ if(window.__officerUploadWrapped||!window.__OTS_BOOTSTRAP_READY)return;
+ const prev=window.processReportSet||window.processWorkbook;if(typeof prev!=='function')return;
+ window.__officerUploadWrapped=true;
+ const wrapped=async function(){
+   leaveHistoryForFreshData();setupToolbar();
+   const out=await prev.apply(this,arguments);
+   if(window.OTS7?.loaded){leaveHistoryForFreshData();if(typeof renderAll==='function')renderAll();setTimeout(install,40)}
+   return out;
+ };
+ window.processReportSet=wrapped;window.processWorkbook=wrapped;
+ const b=document.querySelector('#reportModal .btn.primary');if(b)b.onclick=wrapped;
+}
+function install(){wrapAuthority();setupLiveStrip();setupToolbar();decorateSelectedDate();wrapUpload()}
+let installed=false,tries=0;const timer=setInterval(()=>{tries++;install();if(!installed&&$('search')){intercept();installed=true}if(tries>240)clearInterval(timer)},120);
+window.addEventListener('load',()=>{install();setTimeout(install,600)});
+document.addEventListener('ots:bootstrap-ready',()=>{setTimeout(()=>{wrapUpload();install()},20)});
+document.addEventListener('ots:authority-updated',e=>{if(e?.detail?.mode==='loaded')leaveHistoryForFreshData();setTimeout(install,30)});
+document.addEventListener('ots:shared-applied',()=>setTimeout(install,30));
+setInterval(()=>{setupLiveStrip();setupToolbar();decorateSelectedDate()},1000);
 })();
