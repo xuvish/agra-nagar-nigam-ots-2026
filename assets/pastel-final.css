@@ -1,45 +1,84 @@
-/* White + pastel official dashboard finish. Loaded after official-final.css. */
+/* Final white + pastel glass government dashboard finish. Loaded after official-final.css. */
 html,body{background:#fff!important}
-.shell{background:#fff!important}
-.top{background:#fff!important;border:1px solid #c9d5e2!important;border-top:5px solid #214f7b!important;box-shadow:0 2px 8px rgba(31,78,121,.10)!important}
-.logo{background:#e9f2fb!important;color:#214f7b!important;border-color:#bdd0e2!important}
-.brand h1{color:#173f67!important;display:flex!important;flex-direction:column!important;gap:1px!important;line-height:1.15!important}
+body{background:linear-gradient(180deg,#ffffff 0%,#fbfdff 46%,#f8fbff 100%)!important}
+.shell{background:transparent!important}
+
+/* Official bilingual header: white, polished, restrained. */
+.top{background:linear-gradient(135deg,rgba(255,255,255,.98),rgba(239,247,255,.96))!important;border:1px solid #cad9e8!important;border-top:5px solid #214f7b!important;box-shadow:0 10px 28px rgba(31,78,121,.10),inset 0 1px 0 rgba(255,255,255,.95)!important;overflow:hidden!important;position:relative!important}
+.top:after{content:"";position:absolute;left:0;right:0;top:0;height:45%;background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,0));pointer-events:none}
+.logo{background:linear-gradient(145deg,#f8fcff,#dcecf9)!important;color:#214f7b!important;border-color:#bdd0e2!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 4px 10px rgba(31,78,121,.08)!important}
+.brand{position:relative;z-index:1}.brand h1{color:#173f67!important;display:flex!important;flex-direction:column!important;gap:1px!important;line-height:1.15!important}
 .brand h1 .hindi-title{font-size:16px!important;font-weight:800!important;letter-spacing:0!important}
 .brand h1 .english-title{font-size:19px!important;font-weight:850!important;letter-spacing:.015em!important}
 .brand small{color:#60758a!important;font-size:10px!important}
-.top .btn{background:#f7fbff!important;color:#214f7b!important;border-color:#b9cada!important}.top .btn.primary{background:#dfeefa!important;color:#174b75!important;border-color:#b5cee3!important}
+.actions{position:relative;z-index:1}.top .btn{background:rgba(255,255,255,.86)!important;color:#214f7b!important;border-color:#b9cada!important;box-shadow:inset 0 1px 0 #fff,0 3px 8px rgba(31,78,121,.06)!important}.top .btn.primary{background:linear-gradient(135deg,#eff8ff,#dceefa)!important;color:#174b75!important;border-color:#b5cee3!important}
 
-.official-live-strip{background:#fff!important;border-color:#d7dee7!important;border-left-color:#42a56b!important}
-.official-live-strip .live-label{background:#eaf8ef!important;color:#147a3d!important}.official-live-strip>span:nth-child(2){background:#eef6ff!important}.official-live-strip>span:nth-child(3){background:#fff4e8!important}.official-live-strip>span:nth-child(4){background:#f5efff!important}
+/* Live strip: compact government-style status with pastel glass cells. */
+.official-live-strip{background:rgba(255,255,255,.94)!important;border-color:#d7dee7!important;border-left-color:#42a56b!important;border-radius:8px!important;box-shadow:0 8px 22px rgba(31,78,121,.07),inset 0 1px 0 rgba(255,255,255,.95)!important;overflow:hidden!important}
+.official-live-strip>span{position:relative!important;overflow:hidden!important}
+.official-live-strip>span:after{content:"";position:absolute;left:8%;right:8%;top:0;height:35%;border-radius:0 0 50% 50%;background:linear-gradient(180deg,rgba(255,255,255,.80),rgba(255,255,255,0));pointer-events:none}
+.official-live-strip .live-label{background:linear-gradient(135deg,#f3fff7,#ddf8e8)!important;color:#147a3d!important}.official-live-strip>span:nth-child(2){background:linear-gradient(135deg,#f8fcff,#e8f4ff)!important}.official-live-strip>span:nth-child(3){background:linear-gradient(135deg,#fffaf4,#ffedd9)!important}.official-live-strip>span:nth-child(4){background:linear-gradient(135deg,#fbf8ff,#eee6ff)!important}
 
-/* Keep the screen simple: title + live strip + dashboard. */
+/* Keep screen simple: heading + live strip + dashboard. */
 .hero{display:none!important}
 
-.kpis .kpi:nth-child(6n+1){background:#eaf4ff!important;border-color:#c8def2!important}
-.kpis .kpi:nth-child(6n+2){background:#eaf9f1!important;border-color:#c7e8d6!important}
-.kpis .kpi:nth-child(6n+3){background:#fff3e4!important;border-color:#f1dbc1!important}
-.kpis .kpi:nth-child(6n+4){background:#f3efff!important;border-color:#dcd2f5!important}
-.kpis .kpi:nth-child(6n+5){background:#fff0f3!important;border-color:#f1ced6!important}
-.kpis .kpi:nth-child(6n+6){background:#eaf9fb!important;border-color:#c7e5e8!important}
-.kpi .val{color:#173f67!important}.kpi.good .val{color:#19734a!important}.kpi.warn .val{color:#a45b10!important}.kpi.alert .val{color:#a63d53!important}
+/* Pastel glass KPI cards. */
+.kpi,.glass,.mini,.step{position:relative!important;overflow:hidden!important}
+.kpi:before,.glass:before,.mini:before,.step:before{content:"";position:absolute;left:7%;right:7%;top:0;height:34%;border-radius:0 0 48% 48%;background:linear-gradient(180deg,rgba(255,255,255,.82),rgba(255,255,255,.18) 55%,rgba(255,255,255,0));pointer-events:none;z-index:0}
+.kpi>* , .glass>* , .mini>* , .step>*{position:relative;z-index:1}
+.kpis .kpi{border-radius:13px!important;border-width:1px!important;box-shadow:0 10px 24px rgba(45,72,96,.10),inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(255,255,255,.38)!important;transition:transform .18s ease,box-shadow .18s ease!important}
+.kpis .kpi:hover{transform:translateY(-2px)!important;box-shadow:0 14px 30px rgba(45,72,96,.13),inset 0 1px 0 #fff!important}
+.kpis .kpi:nth-child(6n+1){background:linear-gradient(135deg,#f8fcff 0%,#dceeff 58%,#edf7ff 100%)!important;border-color:#bfd9ef!important}
+.kpis .kpi:nth-child(6n+2){background:linear-gradient(135deg,#f8fffb 0%,#dff7e9 58%,#effcf5 100%)!important;border-color:#bfe4d0!important}
+.kpis .kpi:nth-child(6n+3){background:linear-gradient(135deg,#fffdfa 0%,#ffe9d3 58%,#fff5e9 100%)!important;border-color:#efd2b3!important}
+.kpis .kpi:nth-child(6n+4){background:linear-gradient(135deg,#fdfbff 0%,#e8e0fb 58%,#f5f0ff 100%)!important;border-color:#d4c7ef!important}
+.kpis .kpi:nth-child(6n+5){background:linear-gradient(135deg,#fffafb 0%,#f9dfe6 58%,#fff0f4 100%)!important;border-color:#ecc6d0!important}
+.kpis .kpi:nth-child(6n+6){background:linear-gradient(135deg,#f8feff 0%,#d9f3f5 58%,#eefbfc 100%)!important;border-color:#bee1e5!important}
+.kpi .lab{color:#587087!important}.kpi .val{color:#173f67!important;text-shadow:0 1px 0 rgba(255,255,255,.85)!important}.kpi.good .val{color:#19734a!important}.kpi.warn .val{color:#a45b10!important}.kpi.alert .val{color:#a63d53!important}
 
-.nav{background:#edf4fa!important;border-color:#c3d3e1!important;box-shadow:none!important}
-.tab{color:#44627c!important;border-right:1px solid #cfdbe6!important}.tab.on{background:#214f7b!important;color:#fff!important}
-.glass{background:#fff!important;border-color:#d5dde6!important}.glass h3{color:#214f7b!important;border-bottom-color:#d9e6f1!important}
-.grid2>.glass:nth-child(odd){box-shadow:inset 4px 0 0 #b9d8f2,0 1px 4px rgba(16,24,40,.05)!important}
-.grid2>.glass:nth-child(even){box-shadow:inset 4px 0 0 #c8ead8,0 1px 4px rgba(16,24,40,.05)!important}
-.mini:nth-child(4n+1){background:#eef6ff!important}.mini:nth-child(4n+2){background:#ecfaf2!important}.mini:nth-child(4n+3){background:#fff5e8!important}.mini:nth-child(4n+4){background:#f5f0ff!important}
-.tablewrap{border-color:#ced8e2!important}th{background:#e7f0f8!important;color:#274b6d!important}tbody tr:nth-child(even){background:#fbfdff!important}tbody tr:hover{background:#eef7ff!important}
-.barcol:nth-child(5n+1) .barfill{background:#91bfe5!important}.barcol:nth-child(5n+2) .barfill{background:#84cfa7!important}.barcol:nth-child(5n+3) .barfill{background:#f2c789!important}.barcol:nth-child(5n+4) .barfill{background:#baa8e8!important}.barcol:nth-child(5n+5) .barfill{background:#e6a8b6!important}
-.step:nth-child(5n+1){background:#eef6ff!important;border-color:#cee1f1!important}.step:nth-child(5n+2){background:#ecfaf2!important;border-color:#cae9d7!important}.step:nth-child(5n+3){background:#fff5e8!important;border-color:#efdcc1!important}.step:nth-child(5n+4){background:#f5f0ff!important;border-color:#ddd3f0!important}.step:nth-child(5n+5){background:#fff0f3!important;border-color:#efd1d8!important}
-.notice{background:#fff8e8!important;border-color:#edd8a5!important;color:#6d531b!important}
+/* Official tabs with soft glass depth. */
+.nav{background:linear-gradient(135deg,rgba(238,246,252,.96),rgba(226,238,248,.96))!important;border-color:#c3d3e1!important;border-radius:9px!important;box-shadow:0 8px 20px rgba(31,78,121,.07),inset 0 1px 0 #fff!important;overflow:hidden!important}
+.tab{color:#44627c!important;border-right:1px solid #cfdbe6!important}.tab.on{background:linear-gradient(135deg,#2d618e,#1d4d78)!important;color:#fff!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.20),0 3px 8px rgba(31,78,121,.14)!important}
 
-@media(max-width:900px){.brand h1 .hindi-title{font-size:12px!important}.brand h1 .english-title{font-size:14px!important}.official-live-strip{grid-template-columns:1fr 1fr!important}}
+/* Main content panels: alternating pastel glass surfaces. */
+.glass{border-radius:13px!important;border:1px solid rgba(185,202,218,.88)!important;box-shadow:0 12px 28px rgba(45,72,96,.09),inset 0 1px 0 rgba(255,255,255,.96),inset 0 -1px 0 rgba(255,255,255,.36)!important;backdrop-filter:blur(8px) saturate(110%)!important}
+.grid2>.glass:nth-child(4n+1){background:linear-gradient(135deg,rgba(248,252,255,.98),rgba(226,241,255,.94) 62%,rgba(241,248,255,.96))!important}
+.grid2>.glass:nth-child(4n+2){background:linear-gradient(135deg,rgba(250,255,252,.98),rgba(226,247,236,.94) 62%,rgba(243,252,247,.96))!important}
+.grid2>.glass:nth-child(4n+3){background:linear-gradient(135deg,rgba(255,253,250,.98),rgba(255,237,218,.94) 62%,rgba(255,247,238,.96))!important}
+.grid2>.glass:nth-child(4n+4){background:linear-gradient(135deg,rgba(253,251,255,.98),rgba(235,227,252,.94) 62%,rgba(248,244,255,.96))!important}
+.panel>.glass{background:linear-gradient(135deg,rgba(255,255,255,.98),rgba(239,246,252,.93))!important}
+.glass h3{color:#214f7b!important;border-bottom-color:rgba(173,198,220,.62)!important;text-shadow:0 1px 0 rgba(255,255,255,.75)!important}
+.glass .hint{color:#657d91!important}
 
+/* Mini metric blocks: jewel-like pastel glass without neon. */
+.mini{border-radius:10px!important;border:1px solid rgba(190,205,218,.80)!important;box-shadow:0 7px 15px rgba(45,72,96,.07),inset 0 1px 0 #fff!important}
+.mini:nth-child(4n+1){background:linear-gradient(135deg,#fbfdff,#e2f1ff)!important}.mini:nth-child(4n+2){background:linear-gradient(135deg,#fbfffd,#e1f7eb)!important}.mini:nth-child(4n+3){background:linear-gradient(135deg,#fffdf9,#ffead2)!important}.mini:nth-child(4n+4){background:linear-gradient(135deg,#fdfbff,#e9e1fb)!important}
+
+/* Tables remain crisp and official, with pastel header glass. */
+.tablewrap{border-color:#c9d7e3!important;border-radius:9px!important;background:rgba(255,255,255,.86)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95)!important}
+th{background:linear-gradient(180deg,#f4f9fd,#dfeaf4)!important;color:#274b6d!important;border-bottom-color:#b8cad9!important;text-shadow:0 1px 0 #fff!important}tbody tr:nth-child(even){background:rgba(250,253,255,.76)!important}tbody tr:hover{background:#eef7ff!important}
+
+/* Pastel chart bars with a subtle polished highlight. */
+.barfill{box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 4px 10px rgba(45,72,96,.08)!important}
+.barcol:nth-child(5n+1) .barfill{background:linear-gradient(180deg,#c9e3f7,#7eafd7)!important}.barcol:nth-child(5n+2) .barfill{background:linear-gradient(180deg,#c9efd9,#73bf96)!important}.barcol:nth-child(5n+3) .barfill{background:linear-gradient(180deg,#ffe6bd,#e6b96e)!important}.barcol:nth-child(5n+4) .barfill{background:linear-gradient(180deg,#ded4f7,#a997da)!important}.barcol:nth-child(5n+5) .barfill{background:linear-gradient(180deg,#f6d4dc,#dc94a6)!important}
+
+/* Workflow steps: glass pastel sequence. */
+.step{border-radius:11px!important;box-shadow:0 8px 18px rgba(45,72,96,.07),inset 0 1px 0 #fff!important}
+.step:nth-child(5n+1){background:linear-gradient(135deg,#fbfdff,#e1f0ff)!important;border-color:#c4dcef!important}.step:nth-child(5n+2){background:linear-gradient(135deg,#fbfffd,#e0f6ea)!important;border-color:#c3e4d1!important}.step:nth-child(5n+3){background:linear-gradient(135deg,#fffdf9,#ffe9cf)!important;border-color:#ebd1ae!important}.step:nth-child(5n+4){background:linear-gradient(135deg,#fdfbff,#e9e0fb)!important;border-color:#d3c7ed!important}.step:nth-child(5n+5){background:linear-gradient(135deg,#fffafb,#f8dfe5)!important;border-color:#e9c8d0!important}
+
+.notice{background:linear-gradient(135deg,#fffdf7,#fff2d6)!important;border-color:#e8cf91!important;color:#6d531b!important;border-radius:9px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.92)!important}
+
+/* Modal stays clear and professional. */
+.modalbox{border-radius:12px!important;box-shadow:0 24px 60px rgba(30,55,78,.20)!important}.drop{border-radius:9px!important;background:linear-gradient(135deg,#ffffff,#f4f9fd)!important}
+
+@media(max-width:900px){.brand h1 .hindi-title{font-size:12px!important}.brand h1 .english-title{font-size:14px!important}.official-live-strip{grid-template-columns:1fr 1fr!important}.kpis .kpi,.glass,.mini,.step{border-radius:10px!important}}
+
+/* Print deliberately removes screen-only gloss/depth while keeping pastel readability. */
 @media print{
   html,body,.shell{background:#fff!important}
-  .top{border-top:3px solid #214f7b!important}
+  .top{border-top:3px solid #214f7b!important;box-shadow:none!important;background:#fff!important}.top:after{display:none!important}
   .brand h1 .hindi-title{font-size:11px!important}.brand h1 .english-title{font-size:14px!important}
-  .official-live-strip{display:grid!important}
+  .official-live-strip{display:grid!important;box-shadow:none!important}.official-live-strip>span:after{display:none!important}
+  .kpi,.glass,.mini,.step{box-shadow:none!important;backdrop-filter:none!important}.kpi:before,.glass:before,.mini:before,.step:before{display:none!important}
   .kpi,.mini,.step,th{print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important}
 }
