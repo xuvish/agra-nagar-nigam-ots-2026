@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-if(!window.PUBLIC)return;
+if(typeof PUBLIC==='undefined'||!PUBLIC)return;
 const rows=[];
 const add=(zone,ri,post,items)=>items.forEach(([wardNo,ward])=>rows.push({zone,wardNo,ward,ri,post}));
 add('Chhatta','Anamika Yadav','RI',[[28,'Nai Ki Saray'],[55,'Shahdra'],[65,'Yamuna Par Prakash Nagar'],[54,'Trans Yamuna'],[14,'Kachhpura'],[42,'Bhagawati Bag'],[66,'Nawal Ganj'],[50,'Seeta Nagar'],[83,'Tedi Bagiya']]);
