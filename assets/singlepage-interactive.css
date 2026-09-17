@@ -1,0 +1,39 @@
+/* Single-page executive dashboard + discoverable click/tap drill-downs. */
+.nav{display:none!important}
+.panel{display:none!important}
+#command.panel{display:block!important}
+#command .detail-drawer{display:none!important}
+#command>.grid2:first-of-type{margin-top:16px!important}
+
+.interaction-hint{display:flex;align-items:center;gap:9px;margin:13px 0 2px;padding:9px 13px;border:1px solid #d9e5ef;border-radius:13px;background:linear-gradient(135deg,rgba(239,247,255,.94),rgba(245,252,248,.94));color:#667b8e;font-size:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.96)}
+.interaction-hint .hint-icon{width:24px;height:24px;border-radius:8px;display:grid;place-items:center;background:#fff;color:#245780;font-size:13px;box-shadow:0 3px 9px rgba(44,81,115,.08)}
+
+.exec-clickable,.zone-card,.ep-card,.trend-clickable{cursor:pointer!important;position:relative!important;transition:transform .18s ease,box-shadow .18s ease,filter .18s ease!important;outline:none}
+.exec-clickable:hover,.zone-card:hover,.ep-card:hover,.trend-clickable:hover{transform:translateY(-3px)!important;box-shadow:0 15px 30px rgba(46,80,112,.13),inset 0 1px 0 rgba(255,255,255,.98)!important;filter:saturate(1.03)}
+.exec-clickable:active,.zone-card:active,.ep-card:active,.trend-clickable:active{transform:translateY(-1px) scale(.995)!important}
+.exec-clickable:focus-visible,.zone-card:focus-visible,.ep-card:focus-visible,.trend-clickable:focus-visible{box-shadow:0 0 0 3px rgba(47,126,191,.18),0 13px 28px rgba(46,80,112,.11)!important}
+.card-open-arrow{position:absolute;right:12px;top:11px;width:25px;height:25px;border-radius:9px;display:grid;place-items:center;background:rgba(255,255,255,.66);border:1px solid rgba(255,255,255,.88);color:#315f84;font-size:13px;font-weight:900;box-shadow:0 4px 11px rgba(43,80,113,.08);z-index:5;pointer-events:none}
+.card-view-details{position:absolute;right:13px;bottom:9px;color:#5d7890;font-size:8px;font-weight:800;letter-spacing:.02em;opacity:.84;z-index:5;pointer-events:none}
+.exec-clickable .sub{padding-right:58px!important}
+.zone-card .card-view-details,.ep-card .card-view-details{bottom:8px}
+.zone-card{padding-bottom:27px!important}.ep-card{padding-bottom:28px!important}
+.trend-clickable{padding-bottom:34px!important}.trend-clickable .card-view-details{font-size:9px;right:17px;bottom:12px}
+
+.drill-modal{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:22px;background:rgba(29,50,69,.28);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+.drill-modal.open{display:flex}
+.drill-sheet{width:min(1120px,96vw);max-height:90vh;overflow:hidden;border-radius:24px;border:1px solid rgba(255,255,255,.88);background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(248,252,255,.97));box-shadow:0 28px 80px rgba(30,57,82,.22),inset 0 1px 0 #fff;display:flex;flex-direction:column}
+.drill-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:20px 22px 16px;border-bottom:1px solid #e2eaf1;background:linear-gradient(135deg,#edf7ff,#f4fbf7 58%,#fff7ed)}
+.drill-title{min-width:0}.drill-title h2{margin:0;color:#194d76;font-size:20px;line-height:1.2}.drill-title p{margin:5px 0 0;color:#718295;font-size:10px}
+.drill-close{width:38px;height:38px;flex:0 0 auto;border-radius:12px;border:1px solid #d6e1e9;background:rgba(255,255,255,.9);color:#3c617f;font-size:19px;cursor:pointer;box-shadow:0 4px 11px rgba(43,80,113,.07)}
+.drill-body{padding:18px 22px 24px;overflow:auto;background:#fff}
+.drill-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin-bottom:16px}.drill-stat{padding:13px 14px;border-radius:15px;border:1px solid rgba(208,221,232,.86);background:linear-gradient(135deg,#f2f8ff,#fbfdff);box-shadow:0 6px 17px rgba(44,78,109,.05)}.drill-stat:nth-child(4n+2){background:linear-gradient(135deg,#eefaf4,#fbfffd)}.drill-stat:nth-child(4n+3){background:linear-gradient(135deg,#fff5e8,#fffdf8)}.drill-stat:nth-child(4n+4){background:linear-gradient(135deg,#f5f0ff,#fdfbff)}.drill-stat span{display:block;color:#75879a;font-size:8px;text-transform:uppercase;letter-spacing:.04em}.drill-stat b{display:block;color:#244d6e;font-size:18px;margin-top:5px}
+.drill-section{margin-top:16px}.drill-section h3{margin:0 0 9px;color:#285777;font-size:13px}.drill-note{padding:10px 12px;border:1px solid #dce7ef;border-radius:12px;background:#f7fbfe;color:#657b8e;font-size:9px;margin-bottom:10px}
+.drill-tablewrap{width:100%;overflow:auto;border:1px solid #d6e1e9;border-radius:14px}.drill-table{width:100%;border-collapse:collapse;font-size:10px;background:#fff}.drill-table th{position:sticky;top:0;z-index:1;background:#eaf3fa!important;color:#315672!important;padding:9px 10px;text-align:left;white-space:nowrap}.drill-table td{padding:9px 10px;border-top:1px solid #edf1f5;color:#40586c;vertical-align:top}.drill-table tbody tr:nth-child(even){background:#fbfdff}.drill-table .num{text-align:right}.drill-empty{padding:22px;text-align:center;color:#7b8b99;font-size:11px}
+.drill-zone-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.drill-zone-title b{font-size:16px;color:#204f75}.drill-zone-title span{font-size:9px;color:#73869a}
+.drill-body a{color:#176b9d;text-decoration:none;font-weight:700}.drill-body a:hover{text-decoration:underline}
+body.drill-lock{overflow:hidden}
+
+@media(max-width:760px){.interaction-hint{font-size:9px}.drill-modal{padding:8px;align-items:flex-end}.drill-sheet{width:100%;max-height:92vh;border-radius:22px 22px 10px 10px}.drill-head{padding:16px}.drill-body{padding:14px}.drill-summary{grid-template-columns:1fr 1fr}.drill-title h2{font-size:17px}.card-view-details{font-size:7.5px}}
+@media(max-width:430px){.drill-summary{grid-template-columns:1fr}.card-open-arrow{right:9px;top:8px}.card-view-details{right:10px}}
+
+@media print{.interaction-hint,.card-open-arrow,.card-view-details,.drill-modal{display:none!important}.exec-clickable,.zone-card,.ep-card,.trend-clickable{cursor:default!important;transform:none!important}.nav{display:none!important}.panel{display:none!important}#command.panel{display:block!important}#command .detail-drawer{display:block!important}}
