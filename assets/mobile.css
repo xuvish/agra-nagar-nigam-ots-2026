@@ -1,0 +1,99 @@
+/* Mobile-first data viewing overrides for OTS NEXUS */
+@media (hover:none),(pointer:coarse){
+  body{cursor:auto!important}
+  button,input,select,.clickable{cursor:auto!important}
+  .cursor-dot,.cursor-ring{display:none!important}
+}
+
+@media (max-width:900px){
+  html,body{width:100%;max-width:100%;overflow-x:hidden}
+  body{font-size:14px}
+  #space,.bg-grid,.orb{display:none!important}
+  .shell{max-width:none;width:100%;padding:10px 10px 28px}
+
+  .top{position:relative;top:auto;display:block;padding:11px 12px;border-radius:14px}
+  .brand{align-items:flex-start}
+  .logo{width:38px;height:38px;min-width:38px;border-radius:12px}
+  .brand h1{font-size:14px;line-height:1.25}
+  .brand small{font-size:9px;line-height:1.35}
+  .actions{display:none!important}
+
+  .hero{margin-top:10px;grid-template-columns:1fr;gap:9px}
+  .hero-main{padding:17px 16px;min-height:auto}
+  .hero-side{padding:14px;gap:12px}
+  .hero h2{font-size:31px;line-height:1.02;margin:11px 0 8px}
+  .hero p{font-size:11px;line-height:1.5}
+  .eyebrow{font-size:8px;letter-spacing:.10em;line-height:1.4}
+  .status-block strong{font-size:22px}
+  .signal{width:46px;height:46px;min-width:46px}
+
+  #reportScheduleStrip{display:grid!important;grid-template-columns:1fr!important;gap:7px!important;margin:9px 0!important;padding:10px 11px!important}
+  .schedule-times{font-size:10px;white-space:normal!important}
+  .schedule-meta{display:grid!important;grid-template-columns:1fr;gap:4px!important;font-size:9px!important}
+
+  .toolbar{margin-top:9px;grid-template-columns:1fr;gap:7px}
+  .control{min-height:44px;padding:10px 11px;font-size:12px;border-radius:11px}
+
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:9px}
+  .kpi{min-height:92px;padding:12px 11px;border-radius:13px}
+  .kpi .lab{font-size:8px;line-height:1.3}
+  .kpi .val{font-size:20px;margin-top:7px;overflow-wrap:anywhere}
+  .kpi .sub{font-size:9px;line-height:1.35;margin-top:5px}
+
+  .nav{position:sticky;top:0;z-index:50;margin-top:10px;padding:5px;gap:4px;border-radius:12px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .nav::-webkit-scrollbar{display:none}
+  .tab{padding:9px 10px;font-size:10px}
+
+  .panel{margin-top:9px}
+  .grid2,.grid3{grid-template-columns:1fr;gap:9px}
+  .glass{padding:13px 11px;border-radius:14px;overflow:hidden}
+  .glass h3{font-size:13px}
+  .glass .hint{font-size:9px;line-height:1.45}
+
+  .metric-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:9px}
+  .mini{padding:10px;border-radius:11px;min-width:0}
+  .mini span{font-size:8px;line-height:1.3;white-space:normal}
+  .mini b{font-size:17px;margin-top:5px;overflow-wrap:anywhere}
+
+  .tablewrap{width:100%;max-width:100%;max-height:62vh;margin-top:9px;overflow:auto;-webkit-overflow-scrolling:touch;border-radius:11px;overscroll-behavior:contain}
+  .tablewrap table{width:max-content;min-width:680px;font-size:10px}
+  .tablewrap th,.tablewrap td{padding:9px 9px}
+  .tablewrap th{font-size:8px;top:0}
+  .tablewrap td:first-child,.tablewrap th:first-child{position:sticky;left:0;z-index:1;background:#0b172a}
+  .tablewrap th:first-child{z-index:3;background:#0d1b31}
+
+  .chart{height:205px;gap:4px;padding:14px 4px 27px;overflow:hidden}
+  .barcol small{font-size:7px}
+
+  .flow{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+  .step{min-width:170px;min-height:96px;scroll-snap-align:start}
+  .step:after{display:none}
+  .step b{font-size:17px}
+
+  .queue-item{grid-template-columns:1fr!important;align-items:stretch;gap:7px;padding:10px}
+  .queue-item .meta{font-size:9px}
+  .queue-item select{min-height:42px}
+  .notice{font-size:9px;line-height:1.45;padding:10px}
+
+  .footer{font-size:8px;text-align:center;padding:18px 4px 4px}
+
+  /* Mobile is view-only. Report management is intentionally desktop-only. */
+  #reportModal,#adminLoginModal{display:none!important}
+}
+
+@media (max-width:430px){
+  .shell{padding-left:8px;padding-right:8px}
+  .brand h1{font-size:13px}
+  .brand small{font-size:8px}
+  .hero h2{font-size:27px}
+  .kpis{grid-template-columns:1fr 1fr}
+  .kpi{padding:11px 9px}
+  .kpi .val{font-size:18px}
+  .metric-row{grid-template-columns:1fr 1fr}
+  .tablewrap table{min-width:620px}
+}
+
+@media (max-width:360px){
+  .kpis,.metric-row{grid-template-columns:1fr}
+  .hero h2{font-size:24px}
+}
