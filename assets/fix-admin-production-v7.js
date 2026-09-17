@@ -19,7 +19,7 @@ function enhance(){
  let box=document.getElementById('productionFileStatus');if(!box){box=document.createElement('div');box.id='productionFileStatus';box.className='notice';box.style.marginTop='10px';rm.querySelector('.drop')?.insertAdjacentElement('afterend',box)}
  const input=document.getElementById('masterFile');const refresh=()=>{const count=input?.files?.length||0;box.textContent=count===7?'7 files selected · ready for content recognition and reconciliation.':count+' file(s) selected · choose exactly 7 OTS reports.';const b=rm.querySelector('.btn.primary');if(b)b.disabled=count!==7};if(input&&!input.dataset.prodAdmin){input.dataset.prodAdmin='1';input.addEventListener('change',refresh)}refresh();
 }
-window.openReports=function(){const m=modal();if(sessionStorage.getItem(AUTH_KEY)==='1'){ORIGINAL_OPEN();enhance();return}m.classList.add('on');setTimeout(()=>m.querySelector('#adminUser')?.focus(),50)};
+window.openReports=function(){const m=modal();if(sessionStorage.getItem(AUTH_KEY)==='1'&&window.__otsAdminCred?.password){ORIGINAL_OPEN();enhance();return}sessionStorage.removeItem(AUTH_KEY);m.classList.add('on');setTimeout(()=>m.querySelector('#adminUser')?.focus(),50)};
 window.processReportSet=async function(){if(sessionStorage.getItem(AUTH_KEY)!=='1'){window.openReports();return}const files=[...(document.getElementById('masterFile')?.files||[])];if(files.length!==7){window.uploadMessage?.('Please select exactly 7 OTS reports together.',false);return}return await ORIGINAL_PROCESS.apply(this,arguments)};
 window.processWorkbook=window.processReportSet;
 modal();enhance();
