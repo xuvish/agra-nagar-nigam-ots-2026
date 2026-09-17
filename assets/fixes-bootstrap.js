@@ -41,12 +41,14 @@
                                         load('assets/fix-property-contact-master.js?v=20260918-0124-v2-multimobile',()=>
                                           load('assets/fix-property-contact-multiformat.js?v=20260918-0132-v1',()=>
                                             load('assets/fix-property-master-main-uploader.js?v=20260918-0152-direct-v2',()=>
-                                              load('assets/fix-final-dashboard-integrity.js?v=20260918-0438-integrity-v1',()=>{
-                                                window.__OTS_BOOTSTRAP_READY=true;
-                                                window.processWorkbook=window.processReportSet;
-                                                if(window.renderAll)window.renderAll();
-                                                document.dispatchEvent(new CustomEvent('ots:bootstrap-ready'));
-                                              })
+                                              load('assets/fix-final-dashboard-integrity.js?v=20260918-0438-integrity-v1',()=>
+                                                load('assets/fix-legacy-stage-safety.js?v=20260918-0458-stage-v1',()=>{
+                                                  window.__OTS_BOOTSTRAP_READY=true;
+                                                  window.processWorkbook=window.processReportSet;
+                                                  if(window.renderAll)window.renderAll();
+                                                  document.dispatchEvent(new CustomEvent('ots:bootstrap-ready'));
+                                                })
+                                              )
                                             )
                                           )
                                         )
