@@ -38,11 +38,12 @@
                                     load('assets/fix-intelligence-local-bridge.js?v=20260918-0042-calling-mobile-v3',()=>
                                       load('assets/fix-shared-live.js?v=20260917-2015-v2',()=>
                                         load('assets/fix-property-contact-master.js?v=20260918-0124-v2-multimobile',()=>
-                                          load('assets/fix-property-contact-multiformat.js?v=20260918-0132-v1',()=>{
-                                            window.processWorkbook=window.processReportSet;
-                                            const submit=document.querySelector('#reportModal .btn.primary');if(submit)submit.onclick=window.processReportSet;
-                                            if(window.renderAll)window.renderAll();
-                                          })
+                                          load('assets/fix-property-contact-multiformat.js?v=20260918-0132-v1',()=>
+                                            load('assets/fix-property-master-main-uploader.js?v=20260918-0140-v1',()=>{
+                                              window.processWorkbook=window.processReportSet;
+                                              if(window.renderAll)window.renderAll();
+                                            })
+                                          )
                                         )
                                       )
                                     )
