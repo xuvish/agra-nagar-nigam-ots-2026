@@ -1,0 +1,45 @@
+/* White + pastel official dashboard finish. Loaded after official-final.css. */
+html,body{background:#fff!important}
+.shell{background:#fff!important}
+.top{background:#fff!important;border:1px solid #c9d5e2!important;border-top:5px solid #214f7b!important;box-shadow:0 2px 8px rgba(31,78,121,.10)!important}
+.logo{background:#e9f2fb!important;color:#214f7b!important;border-color:#bdd0e2!important}
+.brand h1{color:#173f67!important;display:flex!important;flex-direction:column!important;gap:1px!important;line-height:1.15!important}
+.brand h1 .hindi-title{font-size:16px!important;font-weight:800!important;letter-spacing:0!important}
+.brand h1 .english-title{font-size:19px!important;font-weight:850!important;letter-spacing:.015em!important}
+.brand small{color:#60758a!important;font-size:10px!important}
+.top .btn{background:#f7fbff!important;color:#214f7b!important;border-color:#b9cada!important}.top .btn.primary{background:#dfeefa!important;color:#174b75!important;border-color:#b5cee3!important}
+
+.official-live-strip{background:#fff!important;border-color:#d7dee7!important;border-left-color:#42a56b!important}
+.official-live-strip .live-label{background:#eaf8ef!important;color:#147a3d!important}.official-live-strip>span:nth-child(2){background:#eef6ff!important}.official-live-strip>span:nth-child(3){background:#fff4e8!important}.official-live-strip>span:nth-child(4){background:#f5efff!important}
+
+/* Keep the screen simple: title + live strip + dashboard. */
+.hero{display:none!important}
+
+.kpis .kpi:nth-child(6n+1){background:#eaf4ff!important;border-color:#c8def2!important}
+.kpis .kpi:nth-child(6n+2){background:#eaf9f1!important;border-color:#c7e8d6!important}
+.kpis .kpi:nth-child(6n+3){background:#fff3e4!important;border-color:#f1dbc1!important}
+.kpis .kpi:nth-child(6n+4){background:#f3efff!important;border-color:#dcd2f5!important}
+.kpis .kpi:nth-child(6n+5){background:#fff0f3!important;border-color:#f1ced6!important}
+.kpis .kpi:nth-child(6n+6){background:#eaf9fb!important;border-color:#c7e5e8!important}
+.kpi .val{color:#173f67!important}.kpi.good .val{color:#19734a!important}.kpi.warn .val{color:#a45b10!important}.kpi.alert .val{color:#a63d53!important}
+
+.nav{background:#edf4fa!important;border-color:#c3d3e1!important;box-shadow:none!important}
+.tab{color:#44627c!important;border-right:1px solid #cfdbe6!important}.tab.on{background:#214f7b!important;color:#fff!important}
+.glass{background:#fff!important;border-color:#d5dde6!important}.glass h3{color:#214f7b!important;border-bottom-color:#d9e6f1!important}
+.grid2>.glass:nth-child(odd){box-shadow:inset 4px 0 0 #b9d8f2,0 1px 4px rgba(16,24,40,.05)!important}
+.grid2>.glass:nth-child(even){box-shadow:inset 4px 0 0 #c8ead8,0 1px 4px rgba(16,24,40,.05)!important}
+.mini:nth-child(4n+1){background:#eef6ff!important}.mini:nth-child(4n+2){background:#ecfaf2!important}.mini:nth-child(4n+3){background:#fff5e8!important}.mini:nth-child(4n+4){background:#f5f0ff!important}
+.tablewrap{border-color:#ced8e2!important}th{background:#e7f0f8!important;color:#274b6d!important}tbody tr:nth-child(even){background:#fbfdff!important}tbody tr:hover{background:#eef7ff!important}
+.barcol:nth-child(5n+1) .barfill{background:#91bfe5!important}.barcol:nth-child(5n+2) .barfill{background:#84cfa7!important}.barcol:nth-child(5n+3) .barfill{background:#f2c789!important}.barcol:nth-child(5n+4) .barfill{background:#baa8e8!important}.barcol:nth-child(5n+5) .barfill{background:#e6a8b6!important}
+.step:nth-child(5n+1){background:#eef6ff!important;border-color:#cee1f1!important}.step:nth-child(5n+2){background:#ecfaf2!important;border-color:#cae9d7!important}.step:nth-child(5n+3){background:#fff5e8!important;border-color:#efdcc1!important}.step:nth-child(5n+4){background:#f5f0ff!important;border-color:#ddd3f0!important}.step:nth-child(5n+5){background:#fff0f3!important;border-color:#efd1d8!important}
+.notice{background:#fff8e8!important;border-color:#edd8a5!important;color:#6d531b!important}
+
+@media(max-width:900px){.brand h1 .hindi-title{font-size:12px!important}.brand h1 .english-title{font-size:14px!important}.official-live-strip{grid-template-columns:1fr 1fr!important}}
+
+@media print{
+  html,body,.shell{background:#fff!important}
+  .top{border-top:3px solid #214f7b!important}
+  .brand h1 .hindi-title{font-size:11px!important}.brand h1 .english-title{font-size:14px!important}
+  .official-live-strip{display:grid!important}
+  .kpi,.mini,.step,th{print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important}
+}
