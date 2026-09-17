@@ -39,7 +39,14 @@ function riRows(z='All'){return(payload()?.riRows||[]).filter(r=>z==='All'||r.zo
 function wardRows(z='All'){return(payload()?.wardRows||[]).filter(r=>z==='All'||r.zone===z)}
 window.OTS_AUTHORITY={payload,control,daily,collection,cashiers,applications,payments,paidRows,fullPaidApps,followupRows,riRows,wardRows,detail:currentDetail,loadDetail:getDetail,restoreDetail:restore,zoneOf};
 const prev=window.processReportSet||window.processWorkbook;
-window.processReportSet=async function(){const out=await prev.apply(this,arguments);if(window.OTS7?.loaded)await save();return out};window.processWorkbook=window.processReportSet;
+window.processReportSet=async function(){
+ const out=await prev.apply(this,arguments);
+ if(window.OTS7?.loaded){
+  try{const x=window.__applyPropertyContactMaster?.();if(x&&typeof x.then==='function')await x}catch(e){}
+  await save();
+ }
+ return out;
+};window.processWorkbook=window.processReportSet;
 document.addEventListener('ots:shared-ready',()=>restore());
 document.addEventListener('ots:shared-applied',()=>restore());
 document.addEventListener('ots:published',()=>save());
