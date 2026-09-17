@@ -1,4 +1,5 @@
 /* Prevent stale fallback figures from flashing before the authoritative bootstrap finishes. */
+body.ots-booting #officialLiveStrip,
 body.ots-booting .toolbar,
 body.ots-booting .kpis,
 body.ots-booting .nav,
