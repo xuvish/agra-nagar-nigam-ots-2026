@@ -23,7 +23,9 @@
                   submit.textContent='Submit Reports & Recalculate';
                 }
               }
-              load('assets/fix-point7.js?v=20260917-0830');
+              load('assets/fix-point7.js?v=20260917-0830',()=>
+                load('assets/fix-engine-v3.js?v=20260917-1205')
+              );
             })
           )
         );
