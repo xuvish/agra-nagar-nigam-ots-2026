@@ -6,7 +6,8 @@
     s.onerror=()=>console.error('Failed to load',src);
     document.body.appendChild(s);
   }
-  load('assets/fix-excel-date-local.js?v=20260917-2340-v1',()=>
+  load('assets/fix-locked-roster-final.js?v=20260918-0452-roster-v1',()=>
+   load('assets/fix-excel-date-local.js?v=20260917-2340-v1',()=>
     load('assets/fix-point1.js?v=20260917-0900',()=>{
       let tries=0;
       const wait=setInterval(()=>{
@@ -67,5 +68,6 @@
         }
       },50);
     })
+   )
   );
 })();
