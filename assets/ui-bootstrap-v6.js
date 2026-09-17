@@ -16,7 +16,9 @@ function start(){
   load('assets/executive-paymentdone.js?v=20260918-0715-ui-v6',()=>{
    window.__OFFICER_UI_ACTIVE=true;
    load('assets/singlepage-interactive.js?v=20260918-0715-ui-v6',()=>
-    load('assets/officer-polish-v5.js?v=20260918-0715-ui-v6',reveal)
+    load('assets/officer-modal-actions-v1.js?v=20260918-0715-ui-v6',()=>
+     load('assets/officer-polish-v5.js?v=20260918-0715-ui-v6',reveal)
+    )
    );
   })
  );
