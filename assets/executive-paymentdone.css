@@ -1,0 +1,20 @@
+/* Payment-done executive metric: keep 9 primary cards spacious and readable. */
+@media (min-width:1101px){
+  .kpis{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
+.exec-payment-done{
+  background:linear-gradient(135deg,#ddf7e8 0%,#f7fff9 48%,#d8f1e3 100%)!important;
+  border-color:#bfe3cf!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.98),0 10px 24px rgba(40,110,78,.08)!important;
+}
+.exec-payment-done:before{
+  content:"";position:absolute;left:5%;right:5%;top:0;height:34%;border-radius:18px 18px 45% 45%;
+  background:linear-gradient(180deg,rgba(255,255,255,.86),rgba(255,255,255,.12));pointer-events:none
+}
+.exec-payment-done .lab,.exec-payment-done .val,.exec-payment-done .sub{position:relative}
+.exec-payment-done .val{color:#176845!important}
+.payment-done-stat b{color:#176845!important}
+@media print{
+  .kpis{grid-template-columns:repeat(3,1fr)!important}
+  .exec-payment-done:before{display:none!important}
+}
