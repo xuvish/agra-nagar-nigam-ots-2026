@@ -37,7 +37,7 @@
                                   load('assets/fix-followup-contact-safety.js?v=20260917-2352-v1',()=>
                                     load('assets/fix-intelligence-local-bridge.js?v=20260918-0042-calling-mobile-v3',()=>
                                       load('assets/fix-shared-live.js?v=20260917-2015-v2',()=>
-                                        load('assets/fix-property-contact-master.js?v=20260918-0046-v1',()=>{
+                                        load('assets/fix-property-contact-master.js?v=20260918-0124-v2-multimobile',()=>{
                                           window.processWorkbook=window.processReportSet;
                                           const submit=document.querySelector('#reportModal .btn.primary');if(submit)submit.onclick=window.processReportSet;
                                           if(window.renderAll)window.renderAll();
