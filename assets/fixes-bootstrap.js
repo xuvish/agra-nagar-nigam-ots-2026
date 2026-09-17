@@ -32,7 +32,7 @@
                       if(submit) submit.onclick=window.processReportSet;
                     }
                     load('assets/fix-admin-live.js?v=20260917-1310',()=>
-                      load('assets/fix-smart-upload.js?v=20260917-1505',()=>
+                      load('assets/fix-smart-upload.js?v=20260917-1722',()=>
                         load('assets/fix-shared-live.js?v=20260917-1518',()=>
                           load('assets/fix-mapper-v4.js?v=20260917-1608',()=>
                             load('assets/fix-mapper-v5.js?v=20260917-1638',()=>{
