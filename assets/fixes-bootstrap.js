@@ -39,7 +39,7 @@
                                       load('assets/fix-shared-live.js?v=20260917-2015-v2',()=>
                                         load('assets/fix-property-contact-master.js?v=20260918-0124-v2-multimobile',()=>
                                           load('assets/fix-property-contact-multiformat.js?v=20260918-0132-v1',()=>
-                                            load('assets/fix-property-master-main-uploader.js?v=20260918-0140-v1',()=>{
+                                            load('assets/fix-property-master-main-uploader.js?v=20260918-0152-direct-v2',()=>{
                                               window.processWorkbook=window.processReportSet;
                                               if(window.renderAll)window.renderAll();
                                             })
