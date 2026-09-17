@@ -1,0 +1,5 @@
+(function(){
+'use strict';
+function install(){const A=window.OTS_AUTHORITY;if(!A||A.__legacyStageSafe)return false;A.__legacyStageSafe=true;const old=A.stageByZone.bind(A);A.stageByZone=function(z){const raw={CTO:0,RI:0,TS:0,'With Applicant':0,Other:0,...(old(z)||{})},sum=Object.values(raw).reduce((s,v)=>s+(Number(v)||0),0),c=A.control(z)||{};if(sum===0&&Number(c.inProcess||0)>0){const applicant=Math.min(Number(c.inProcess||0),Number(c.applicantPending||0));raw['With Applicant']=applicant;raw.Other=Math.max(0,Number(c.inProcess||0)-applicant);raw.__legacyApprox=true}return raw};if(window.renderAll)window.renderAll();return true}
+let t=0;const x=setInterval(()=>{t++;if(install()||t>100)clearInterval(x)},100);document.addEventListener('ots:authority-updated',install);document.addEventListener('ots:shared-applied',install);
+})();
