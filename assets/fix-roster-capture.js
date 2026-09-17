@@ -1,0 +1,1 @@
+(function(){if(typeof PUBLIC==='undefined'||!Array.isArray(PUBLIC.roster))return;window.__OTS_LOCKED_ROSTER=PUBLIC.roster.map(r=>({...r}));window.__OTS_LOCKED_TS={...(PUBLIC.ts||{})};})();
