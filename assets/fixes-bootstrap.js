@@ -28,7 +28,7 @@ function waitFor(fn,ms=4500){
   await load('assets/fix-point7.js?v=20260917-0830');
   await load('assets/fix-engine-v3.js?v=20260917-1205');
   await load('assets/fix-point8.js?v=20260917-1145');
-  await load('assets/fix-admin-live.js?v=20260917-1310');
+  await load('assets/fix-admin-production-v7.js?v=20260918-0815-admin-v7');
   await load('assets/fix-smart-upload.js?v=20260917-1722');
   await load('assets/fix-tight-mapper.js?v=20260917-2010-v2');
   await load('assets/fix-source-authority.js?v=20260917-2335-v1');
@@ -41,7 +41,7 @@ function waitFor(fn,ms=4500){
   await load('assets/fix-property-contact-master.js?v=20260918-0124-v2-multimobile');
   await load('assets/fix-property-contact-multiformat.js?v=20260918-0132-v1');
   await load('assets/fix-property-master-main-uploader.js?v=20260918-0152-direct-v2');
-  await load('assets/fix-authority-v7.js?v=20260918-0805-production-v7');
+  await load('assets/fix-authority-v7.js?v=20260918-0815-production-v7b');
   window.processWorkbook=window.processReportSet||window.processWorkbook;
   const submit=document.querySelector('#reportModal .btn.primary');
   if(submit&&window.processWorkbook){submit.onclick=window.processWorkbook;submit.textContent='Submit Reports & Recalculate';}
