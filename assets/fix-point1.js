@@ -84,3 +84,4 @@
   }
   renderAll();
 })();
+(function(){const s=document.createElement('script');s.src='assets/fix-point2.js?v=20260917-0815';s.onload=()=>{if(window.renderAll)renderAll()};document.body.appendChild(s)})();
