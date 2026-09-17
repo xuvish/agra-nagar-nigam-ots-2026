@@ -24,7 +24,16 @@
                 }
               }
               load('assets/fix-point7.js?v=20260917-0830',()=>
-                load('assets/fix-engine-v3.js?v=20260917-1205')
+                load('assets/fix-engine-v3.js?v=20260917-1205',()=>
+                  load('assets/fix-point8.js?v=20260917-1145',()=>{
+                    if(typeof window.processReportSet==='function'){
+                      window.processWorkbook=window.processReportSet;
+                      const submit=document.querySelector('#reportModal .btn.primary');
+                      if(submit) submit.onclick=window.processReportSet;
+                    }
+                    if(window.renderAll) window.renderAll();
+                  })
+                )
               );
             })
           )
