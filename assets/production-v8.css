@@ -230,3 +230,42 @@ html,body{overflow-x:hidden!important;max-width:100%!important;color:#102f4b!imp
  .prod-head-actions{width:100%;display:grid;grid-template-columns:1fr 1fr}
  .prod-head-actions .prod-inline-action{width:100%;min-width:0}
 }
+
+/* Official OTS initial loading screen */
+#otsLoadingScreen{
+ position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;
+ padding:24px;background:linear-gradient(180deg,#f7fbfe 0%,#ffffff 48%,#f7fbfa 100%);
+ opacity:1;visibility:visible;transition:opacity .45s ease,visibility .45s ease;
+}
+#otsLoadingScreen.is-ready{opacity:0;visibility:hidden;pointer-events:none}
+.ots-loading-card{
+ width:min(520px,92vw);text-align:center;padding:38px 30px 34px;border:1px solid #d2e2ec;border-radius:24px;
+ background:rgba(255,255,255,.94);box-shadow:0 24px 70px rgba(29,72,103,.10),inset 0 1px 0 #fff;
+}
+.ots-loading-mark{
+ width:62px;height:62px;margin:0 auto 18px;border-radius:18px;display:grid;place-items:center;
+ background:linear-gradient(135deg,#e8f5ff,#e8f8ef);border:1px solid #cbdfe9;color:#1c5b84;
+ font-size:17px;font-weight:950;letter-spacing:.05em;box-shadow:0 8px 24px rgba(35,87,122,.09)
+}
+.ots-loading-spinner{width:48px;height:48px;margin:0 auto 18px;position:relative}
+.ots-loading-spinner:before,.ots-loading-spinner:after{
+ content:"";position:absolute;inset:0;border-radius:50%;border:3px solid #dceaf2;border-top-color:#2d739f;
+ animation:otsSpin 1.05s linear infinite
+}
+.ots-loading-spinner:after{inset:8px;border-width:2px;border-color:#e2eee8;border-bottom-color:#45a871;animation-duration:1.4s;animation-direction:reverse}
+.ots-loading-card h2{margin:0;color:#173f61;font-size:22px;font-weight:950;line-height:1.25}
+.ots-loading-dots{display:inline-flex;gap:4px;margin-left:5px;vertical-align:middle}
+.ots-loading-dots i{width:5px;height:5px;border-radius:50%;background:#2d739f;display:block;animation:otsDot 1.15s infinite ease-in-out}
+.ots-loading-dots i:nth-child(2){animation-delay:.16s}.ots-loading-dots i:nth-child(3){animation-delay:.32s}
+.ots-loading-card p{margin:11px 0 0;color:#667f91;font-size:12px;line-height:1.65;font-weight:650}
+.ots-loading-rule{width:82px;height:3px;border-radius:999px;margin:20px auto 0;background:linear-gradient(90deg,#2d739f,#47aa73)}
+@keyframes otsSpin{to{transform:rotate(360deg)}}
+@keyframes otsDot{0%,60%,100%{transform:translateY(0);opacity:.35}30%{transform:translateY(-5px);opacity:1}}
+@media(max-width:720px){
+ .ots-loading-card{padding:30px 20px 28px;border-radius:20px}
+ .ots-loading-mark{width:56px;height:56px;border-radius:16px}
+ .ots-loading-card h2{font-size:19px}.ots-loading-card p{font-size:11px}
+}
+@media(prefers-reduced-motion:reduce){
+ .ots-loading-spinner:before,.ots-loading-spinner:after,.ots-loading-dots i{animation:none}
+}
