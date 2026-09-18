@@ -4,14 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
-<title>Agra Nagar Nigam OTS Dashboard</title>
+<title>Agra Nagar Nigam OTS Dashboard · Production V8</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <link rel="stylesheet" href="assets/style.css?v=20260917-0725">
 <link rel="stylesheet" href="assets/mobile.css?v=20260918-0245-govmis-v1">
 <link rel="stylesheet" href="assets/official-final.css?v=20260918-0300-print-v1">
 <link rel="stylesheet" href="assets/pastel-final.css?v=20260918-0312-glass-v2">
 
-<link rel="stylesheet" href="assets/production-v7.css?v=20260918-0845-final-v7">
+<link rel="stylesheet" href="assets/production-v8.css?v=20260918-0920-final-v8">
+<style id="v8Critical">
+.toolbar,.nav,.panel,#kpis,#asof,#zone,#reportScheduleStrip,.hero,.footer{display:none!important}
+#space,.bg-grid,.orb,.cursor-dot,.cursor-ring{display:none!important}
+</style>
 </head>
 <body>
 <canvas id="space"></canvas><div class="bg-grid"></div><div class="orb a"></div><div class="orb b"></div><div class="orb c"></div>
@@ -38,11 +42,10 @@
  <div class="footer">नगर निगम आगरा · OTS 2026-27</div>
 </div>
 <div class="modal" id="reportModal"><div class="modalbox"><div style="display:flex;justify-content:space-between;gap:12px"><div><h2 style="margin:0;font-size:20px">Manage Reports</h2><p style="color:#64788a;font-size:11px;margin:5px 0 0">Select the 7 OTS report files.</p></div><button class="btn" onclick="closeReports()">✕</button></div><div class="drop"><b>Choose all 7 OTS report files together</b><div style="color:#64788a;font-size:10px;margin-top:6px">Applications + Zone/Ward Summary + Collection + FULL Payment + PART Payment + In-Process + Approved Applications.</div><input id="masterFile" type="file" accept=".xlsx,.xls,.csv" multiple style="margin-top:12px"></div><div id="uploadMsg" class="msg"></div><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn" onclick="closeReports()">Cancel</button><button class="btn primary" onclick="processWorkbook()">Submit Reports & Recalculate</button></div></div></div>
-<script src="assets/reset-production-v7.js?v=20260918-0805-reset-v7"></script>
 <script src="assets/data.js?v=20260918-0805-empty-v7"></script>
 <script src="assets/app-core.js?v=20260917-0900"></script>
 <script src="assets/app-render.js?v=20260917-0900"></script>
 <script src="assets/app-ui.js?v=20260917-0900"></script>
-<script src="assets/fixes-bootstrap.js?v=20260918-0845-production-v7"></script>
-<script src="assets/production-v7.js?v=20260918-0845-final-v7"></script>
+<script src="assets/fixes-bootstrap.js?v=20260918-0920-production-v8"></script>
+<script src="assets/production-v8.js?v=20260918-0920-final-v8"></script>
 </body></html>
