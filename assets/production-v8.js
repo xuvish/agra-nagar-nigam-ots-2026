@@ -21,7 +21,15 @@ const zoneOf=r=>S(r?.['Allocated zone']||r?.['Property zone']||r?._r?.zone||r?.z
 const wardOf=r=>S(r?.['Allocated ward']||r?.['Property ward']||r?._r?.ward||r?.ward);
 const riOf=r=>S(r?.['Allocated RI / TC']||r?.['Property RI']||r?._r?.ri||r?.ri);
 const mobileOf=r=>S(r?.['Contact mobile']||r?.['Mobile No.']||r?.['Mobile (masked)']||r?.Mobile);
-const state={history:null,historyMeta:null,historyDetail:null,ready:false};
+const state={history:null,historyMeta:null,historyDetail:null,ready:false,loadingReleased:false};
+function releaseInitialLoading(force=false){
+ if(state.loadingReleased)return;
+ const hasData=!!S((window.SHARED_LIVE||PUBLIC)?.snapshot);
+ if(!hasData&&!force)return;
+ state.loadingReleased=true;
+ const el=document.getElementById('otsLoadingScreen');
+ if(el){el.classList.add('is-ready');setTimeout(()=>el.remove(),600)}
+}
 function payload(){return state.history||window.SHARED_LIVE||PUBLIC}
 function control(z='All'){const p=payload();return z==='All'?(p.city||{}):(p.zones?.[z]||{})}
 function daily(z='All'){const p=payload();return z==='All'?(p.cityDaily||[]):(p.zoneDaily?.[z]||[])}
@@ -68,6 +76,7 @@ function pendingGrid(z='All'){
 }
 function render(){
  ensure();status();const host=$('productionDashboard'),p=payload(),snap=S(p?.snapshot);if(!host)return;
+ if(snap)releaseInitialLoading(false);
  if(!snap){host.innerHTML='<div class="prod-empty"><h2>Ready for fresh OTS reports</h2><p>Upload the seven OTS reports from Manage Reports. The portal will calculate City → Zone → RI → Ward, save the report date, and preserve it after refresh.</p><button type="button" id="prodOpenReports">Upload 7 Reports</button></div>';$('prodOpenReports').onclick=()=>window.openReports?.();return}
  const c=control('All'),m=collection('All'),d=done('All'),k=[['Total Applications',number(c.applications),'Nagar Nigam total','blue','applications'],['Approved',number(c.approved),pct(c.approved,c.applications)+' of applications','green','approved'],['In Process',number(c.inProcess),'Current pending workflow','peach','inprocess'],['Approved & Payment Done',d==null?'—':number(d),'FULL payment completed','lav','paymentdone'],['Approved · Payment Pending',number(pending('All')),'Approved · no payment started','pink','paymentpending'],['Total Collection',money(m.total),number(m.receipts)+' receipts','cyan','collection'],['Today Collection',money(m.today),number(m.todayReceipts)+' receipts · '+fmtDate(m.asof),'blue','today'],['Demand',money(c.demand),'OTS demand control','green','demand'],['Recovery vs Demand',pct(m.total,c.demand),'Collection against demand','peach','recovery']];
  const rows=m.daily.slice(-12),max=Math.max(1,...rows.map(r=>N(r.amount))),bars=rows.map(r=>'<div class="prod-bar-col"><div class="prod-bar" style="height:'+Math.max(2,Math.round(N(r.amount)/max*145))+'px"></div><b>'+esc(fmtDate(r.date).replace(/ 2026$/,''))+'</b><span>'+esc(money(r.amount))+'</span></div>').join('');
@@ -436,6 +445,6 @@ async function loadDates(){const msg=$('prodCalendarMsg');if(msg)msg.textContent
 async function openDate(date){if(!/^\d{4}-\d{2}-\d{2}$/.test(S(date)))return;const msg=$('prodCalendarMsg');if(msg)msg.textContent='Opening saved report…';try{const r=await fetch(LIVE_URL+'?date='+encodeURIComponent(date),{cache:'no-store'}),j=await r.json(),row=j?.snapshot;if(!row?.payload){msg.textContent='No saved report for this date.';return}state.history=row.payload;state.historyMeta=row;state.historyDetail=await window.OTS_AUTHORITY?.loadDetail?.(date);$('prodCalendarPop').classList.remove('open');render()}catch(e){if(msg)msg.textContent='Could not open saved report.'}}
 async function backLive(){state.history=null;state.historyMeta=null;state.historyDetail=null;$('prodCalendarPop')?.classList.remove('open');await window.OTS_AUTHORITY?.restoreDetail?.(S((window.SHARED_LIVE||PUBLIC).snapshot));render()}
 function tick(){if(!state.history&&$('prodClockV8'))$('prodClockV8').textContent=clock();if($('prodNextSchedule'))$('prodNextSchedule').textContent=nextSchedule()}
-function init(){if(state.ready)return;state.ready=true;ensure();render();setInterval(tick,1000);document.addEventListener('ots:shared-applied',()=>{if(!state.history)render()});document.addEventListener('ots:shared-ready',()=>{if(!state.history)render()});document.addEventListener('ots:detail-ready',()=>{if(!state.history)render()});document.addEventListener('ots:published',()=>{state.history=null;state.historyMeta=null;state.historyDetail=null;render()})}
+function init(){if(state.ready)return;state.ready=true;ensure();render();setTimeout(()=>releaseInitialLoading(true),45000);setInterval(tick,1000);document.addEventListener('ots:shared-applied',()=>{if(!state.history)render()});document.addEventListener('ots:shared-ready',()=>{if(!state.history)render()});document.addEventListener('ots:detail-ready',()=>{if(!state.history)render()});document.addEventListener('ots:published',()=>{state.history=null;state.historyMeta=null;state.historyDetail=null;render()})}
 if(window.__OTS_BOOTSTRAP_READY)init();document.addEventListener('ots:bootstrap-ready',init,{once:true});window.addEventListener('load',()=>setTimeout(()=>{if(!state.ready)init()},300));
 })();
