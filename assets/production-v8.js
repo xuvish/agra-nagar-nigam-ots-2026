@@ -117,6 +117,17 @@ function reportWindow(title,bodyHtml,orientation='portrait'){
  .compact th,.compact td{padding:5px 5px}
  .summary-table{margin-bottom:9px}
  .summary-table th{width:35%;text-align:left}.summary-table td{font-weight:800}
+ .zone-one-page .report-head{margin-bottom:6mm}
+ .zone-top{display:grid;grid-template-columns:1.2fr .8fr;gap:7px;align-items:start;margin-bottom:6px}
+ .zone-summary,.zone-stage{margin:0}
+ .zone-one-page .section-title{font-size:9pt;margin:6px 0 3px}
+ .zone-one-page th,.zone-one-page td{padding:3px 3.5px}
+ .zone-one-page .ri-table th,.zone-one-page .ri-table td{font-size:6.9pt}
+ .zone-one-page .ward-table th,.zone-one-page .ward-table td{font-size:6.4pt;padding:2.8px 3px;line-height:1.1}
+ .zone-one-page .ward-title{margin-top:5px}
+ .zone-one-page .footer{margin-top:4px}
+ .zone-one-page .ward-table th:nth-child(1){width:8%}.zone-one-page .ward-table th:nth-child(2){width:26%}.zone-one-page .ward-table th:nth-child(3){width:22%}.zone-one-page .ward-table th:nth-child(4),.zone-one-page .ward-table th:nth-child(5),.zone-one-page .ward-table th:nth-child(6){width:9%}.zone-one-page .ward-table th:nth-child(7){width:17%}
+ .zone-one-page .ri-table th:nth-child(1){width:28%}.zone-one-page .ri-table th:nth-child(2),.zone-one-page .ri-table th:nth-child(3),.zone-one-page .ri-table th:nth-child(4),.zone-one-page .ri-table th:nth-child(5){width:11%}.zone-one-page .ri-table th:nth-child(6){width:28%}
  .footnote{font-size:7pt;color:#5d6770;margin-top:6px}
  .footer{margin-top:8px;padding-top:5px;border-top:1px solid #cbd4dc;font-size:7pt;color:#67727b;display:flex;justify-content:space-between}
  @media print{body{background:#fff}.page{break-inside:avoid}}`;
@@ -143,19 +154,17 @@ function exportZonePDF(z,c,m,ri,wards,o,st){
  const summaryRows=[
   ['Applications',number(c.applications)],['Approved',number(c.approved)],['In Process',number(c.inProcess)],
   ['Rejected',number(c.rejected)],['Paid Applicants',number(started(z))],['Unpaid Approved',number(pending(z))],
-  ['Total Collection',money(m.total)],[todayLabel,money(m.today)],['Previous Days',money(Math.max(0,m.total-m.today))],
-  ['Online Paid',money(o.amount)],['Demand',money(c.demand)],['Recovery',pct(m.total,c.demand)]
+  ['Total Collection',money(m.total)],[todayLabel,money(m.today)],['Previous Days',money(Math.max(0,m.total-m.today))]
  ];
- const summary='<table class="summary-table compact"><tbody>'+summaryRows.map(x=>'<tr><th>'+esc(x[0])+'</th><td>'+esc(x[1])+'</td></tr>').join('')+'</tbody></table>';
+ const summary='<table class="summary-table compact zone-summary"><tbody>'+summaryRows.map(x=>'<tr><th>'+esc(x[0])+'</th><td>'+esc(x[1])+'</td></tr>').join('')+'</tbody></table>';
  const stages=[['With Applicant',st['With Applicant']],['CTO',st.CTO],['RI',st.RI],['TS',st.TS],['Other / Unallocated',st.Other+(st.gap||0)],['TOTAL IN PROCESS',st.total]];
- const stageTable='<table class="compact"><thead><tr><th>Pending Responsibility</th><th>Count</th></tr></thead><tbody>'+stages.slice(0,-1).map(x=>'<tr><td>'+esc(x[0])+'</td><td class="center">'+number(x[1])+'</td></tr>').join('')+'</tbody><tfoot><tr class="total-row"><td>'+esc(stages.at(-1)[0])+'</td><td class="center">'+number(stages.at(-1)[1])+'</td></tr></tfoot></table>';
+ const stageTable='<table class="compact zone-stage"><thead><tr><th>Pending Responsibility</th><th>Count</th></tr></thead><tbody>'+stages.slice(0,-1).map(x=>'<tr><td>'+esc(x[0])+'</td><td class="center">'+number(x[1])+'</td></tr>').join('')+'</tbody><tfoot><tr class="total-row"><td>'+esc(stages.at(-1)[0])+'</td><td class="center">'+number(stages.at(-1)[1])+'</td></tr></tfoot></table>';
  const riRows=ri.map(r=>'<tr><td>'+esc(r.ri||'—')+'</td><td class="center">'+number(r.applications)+'</td><td class="center">'+number(r.approved)+'</td><td class="center">'+number(r.inProcess)+'</td><td class="center">'+number(r.paidApplicants)+'</td><td class="num">'+money(r.collection)+'</td></tr>').join('');
  const riTotal='<tr class="total-row"><td>TOTAL</td><td class="center">'+number(ri.reduce((a,r)=>a+N(r.applications),0))+'</td><td class="center">'+number(ri.reduce((a,r)=>a+N(r.approved),0))+'</td><td class="center">'+number(ri.reduce((a,r)=>a+N(r.inProcess),0))+'</td><td class="center">'+number(ri.reduce((a,r)=>a+N(r.paidApplicants),0))+'</td><td class="num">'+money(ri.reduce((a,r)=>a+N(r.collection),0))+'</td></tr>';
  const wardRows=wards.map(r=>'<tr><td class="center">'+esc(r.wardNo??'—')+'</td><td>'+esc(r.ward||'—')+'</td><td>'+esc(r.ri||'—')+'</td><td class="center">'+number(r.applications)+'</td><td class="center">'+number(r.approved)+'</td><td class="center">'+number(r.inProcess)+'</td><td class="num">'+money(r.collection)+'</td></tr>').join('');
  const wardTotal='<tr class="total-row"><td colspan="3">TOTAL</td><td class="center">'+number(wards.reduce((a,r)=>a+N(r.applications),0))+'</td><td class="center">'+number(wards.reduce((a,r)=>a+N(r.approved),0))+'</td><td class="center">'+number(wards.reduce((a,r)=>a+N(r.inProcess),0))+'</td><td class="num">'+money(wards.reduce((a,r)=>a+N(r.collection),0))+'</td></tr>';
- const page1='<section class="page">'+cleanHead(z.toUpperCase()+' ZONE · OTS DATA','Status, Pendency and RI / TC Summary | '+snap)+summary+'<div class="section-title">Application Pendency</div>'+stageTable+'<div class="section-title">RI / TC Performance</div><table class="compact ri-table"><thead><tr><th>RI / TC</th><th>Applications</th><th>Approved</th><th>In Process</th><th>Paid Applicants</th><th>Collection</th></tr></thead><tbody>'+riRows+'</tbody><tfoot>'+riTotal+'</tfoot></table><div class="footer"><span>नगर निगम आगरा</span><span>'+esc(z)+' Zone · '+esc(TS[z]||'')+'</span></div></section>';
- const page2='<section class="page">'+cleanHead(z.toUpperCase()+' ZONE · WARD-WISE OTS DATA','Ward and RI / TC Position | '+snap)+'<table class="compact ward-table"><thead><tr><th>Ward No.</th><th>Ward</th><th>RI / TC</th><th>Applications</th><th>Approved</th><th>In Process</th><th>Collection</th></tr></thead><tbody>'+wardRows+'</tbody><tfoot>'+wardTotal+'</tfoot></table><div class="footer"><span>नगर निगम आगरा</span><span>'+esc(z)+' Zone</span></div></section>';
- reportWindow(z+' OTS Data',page1+page2,'portrait')
+ const body='<section class="page zone-one-page">'+cleanHead(z.toUpperCase()+' ZONE · OTS DATA','Status, RI / TC and Ward-wise Summary | '+snap)+'<div class="zone-top"><div>'+summary+'</div><div>'+stageTable+'</div></div><div class="section-title">RI / TC Performance</div><table class="compact ri-table"><thead><tr><th>RI / TC</th><th>Applications</th><th>Approved</th><th>In Process</th><th>Paid Applicants</th><th>Collection</th></tr></thead><tbody>'+riRows+'</tbody><tfoot>'+riTotal+'</tfoot></table><div class="section-title ward-title">Ward-wise Position</div><table class="compact ward-table"><thead><tr><th>Ward No.</th><th>Ward</th><th>RI / TC</th><th>Applications</th><th>Approved</th><th>In Process</th><th>Collection</th></tr></thead><tbody>'+wardRows+'</tbody><tfoot>'+wardTotal+'</tfoot></table><div class="footer"><span>नगर निगम आगरा</span><span>'+esc(z)+' Zone · '+esc(TS[z]||'')+'</span></div></section>';
+ reportWindow(z+' OTS Data',body,'portrait')
 }
 function exportDashboardPDF(){
  const p=payload(),snap=fmtDate(p.snapshot),c=control('All'),m=collection('All'),st=stageStats('All'),todayLabel=fmtDate(p.snapshot).replace(/\s+\d{4}$/,'')+' Today';
