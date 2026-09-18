@@ -93,7 +93,22 @@ async function detailFor(date=S(payload()?.snapshot)){if(state.history&&state.hi
 function zoneChoices(mode){return'<div class="prod-zone-choice-grid">'+ZONES.map(z=>'<div class="prod-zone-choice" data-paymode="'+mode+'" data-zone="'+z+'"><span>'+(mode==='done'?'Payment Done':'Payment Pending')+'</span><b>'+number(mode==='done'?(done(z)??0):pending(z))+'</b><small>'+z+' · View applicants →</small></div>').join('')+'</div>'}
 function wirePayChoices(){document.querySelectorAll('[data-paymode]').forEach(el=>el.onclick=()=>showPaymentZone(el.dataset.paymode,el.dataset.zone))}
 async function openKey(k){if(k==='paymentdone'||k==='paymentpending'){openModal(k==='paymentdone'?'Approved & Payment Done':'Approved · Payment Pending','Select a zone to open applicant details',summary([[k==='paymentdone'?'Payment Done':'Payment Pending',number(k==='paymentdone'?(done('All')??0):pending('All'))],['Report Through',fmtDate(payload().snapshot)],['Rule',k==='paymentdone'?'FULL payment only':'Approved · no payment started'],['Zones','4']])+zoneChoices(k==='paymentdone'?'done':'pending'));wirePayChoices();return}if(k==='today')return showToday();if(k==='collection')return showCollection();if(k==='demand'||k==='recovery'){const c=control(),m=collection();openModal(k==='demand'?'Demand':'Recovery vs Demand','All Zones',summary([['Demand',money(c.demand)],['Collection',money(m.total)],['Recovery',pct(m.total,c.demand)],['Report Through',fmtDate(payload().snapshot)]]));return}return showApplications(k,'All')}
-async function showApplications(kind,z='All'){const D=await detailFor(),apps=D?.apps||D?.applications||[];let rows=apps.filter(a=>z==='All'||zoneOf(a)===z);if(kind==='approved')rows=rows.filter(a=>L(a['Application status'])==='approved');if(kind==='inprocess')rows=rows.filter(a=>L(a['Application status'])!=='approved'&&!/reject|cancel/.test(L(a['Application status'])));const c=control(z);let html=summary([['Applications',number(c.applications)],['Approved',number(c.approved)],['In Process',number(c.inProcess)],['View',z]]);if(rows.length)html+='<h3 class="prod-section-title">Application Detail</h3>'+table([{key:'app',label:'Application'},{key:'name',label:'Applicant / Owner'},{key:'mobile',label:'Mobile'},{key:'uid',label:'Property UID'},{key:'zone',label:'Zone'},{key:'ward',label:'Ward'},{key:'ri',label:'RI / TC'},{key:'status',label:'Status'}],rows.slice(0,1200).map(a=>({app:esc(appNo(a)),name:esc(appName(a)),mobile:phone(mobileOf(a)),uid:esc(a['Property UID']||'—'),zone:esc(zoneOf(a)||'—'),ward:esc(wardOf(a)||'—'),ri:esc(riOf(a)||'—'),status:esc(a['Application status']||'—')})));else html+='<div class="prod-modal-empty">Applicant-level detail is private to the browser where this date’s reports were uploaded.</div>';openModal(kind==='approved'?'Approved Applications':kind==='inprocess'?'In Process Applications':'Total Applications',z,html)}
+async function showApplications(kind,z='All'){
+ const D=await detailFor(),apps=D?.apps||D?.applications||[];
+ let rows=apps.filter(a=>z==='All'||zoneOf(a)===z);
+ if(kind==='approved')rows=rows.filter(a=>L(a['Application status'])==='approved');
+ if(kind==='inprocess')rows=rows.filter(a=>L(a['Application status'])!=='approved'&&!/reject|cancel/.test(L(a['Application status'])));
+ if(kind==='inprocess')rows=sortStageRows(rows);
+ const cc=control(z);
+ let html=summary([['Applications',number(cc.applications)],['Approved',number(cc.approved)],['In Process',number(cc.inProcess)],['View',z]]);
+ if(rows.length)html+='<h3 class="prod-section-title">Application Detail</h3>'+table([{key:'app',label:'Application'},{key:'name',label:'Applicant / Owner'},{key:'mobile',label:'Mobile'},{key:'uid',label:'Property UID'},{key:'zone',label:'Zone'},{key:'ward',label:'Ward'},{key:'ri',label:'RI / TC'},{key:'status',label:'Status'}],rows.slice(0,1200).map(a=>({app:esc(appNo(a)),name:esc(appName(a)),mobile:phone(mobileOf(a)),uid:esc(a['Property UID']||'—'),zone:esc(zoneOf(a)||'—'),ward:esc(wardOf(a)||'—'),ri:esc(riOf(a)||'—'),status:esc(a['Application status']||'—')})));
+ else html+='<div class="prod-modal-empty">Applicant-level detail is private to the browser where this date’s reports were uploaded.</div>';
+ const title=kind==='approved'?'Approved Applications':kind==='inprocess'?'In Process Applications':'Total Applications';
+ if(kind==='inprocess'){
+   openModal(title,z,html,()=>exportStagePendencyPrint('Total In Process',z,rows),'Print');
+   if(rows.length){const b=addModalAction('Download PDF',()=>downloadStagePendencyPDF('Total In Process',z,rows,b))}
+ }else openModal(title,z,html)
+}
 function sortStageRows(rows){
  return [...rows].sort((a,b)=>{
   const z=S(zoneOf(a)).localeCompare(S(zoneOf(b)));if(z)return z;
