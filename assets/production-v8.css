@@ -202,3 +202,7 @@ html,body{overflow-x:hidden!important;max-width:100%!important;color:#102f4b!imp
  .prod-card .lab,.prod-zstat span,.prod-pend span,.prod-section-head span{color:#284c66!important}
  .prod-card .val,.prod-zstat b,.prod-pend b{color:#0f3555!important}
 }
+
+.prod-inline-action{border:1px solid #c9dce7;background:linear-gradient(135deg,#eef8ff,#eafaf2);color:#174e72;border-radius:10px;padding:8px 12px;font-size:10px;font-weight:900;cursor:pointer;box-shadow:0 5px 14px rgba(35,83,115,.07);white-space:nowrap}
+.prod-inline-action:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(35,83,115,.10)}
+@media(max-width:720px){.prod-inline-action{width:100%;font-size:12px;padding:10px 12px}}
