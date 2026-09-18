@@ -71,9 +71,11 @@ function render(){
  if(!snap){host.innerHTML='<div class="prod-empty"><h2>Ready for fresh OTS reports</h2><p>Upload the seven OTS reports from Manage Reports. The portal will calculate City → Zone → RI → Ward, save the report date, and preserve it after refresh.</p><button type="button" id="prodOpenReports">Upload 7 Reports</button></div>';$('prodOpenReports').onclick=()=>window.openReports?.();return}
  const c=control('All'),m=collection('All'),d=done('All'),k=[['Total Applications',number(c.applications),'Nagar Nigam total','blue','applications'],['Approved',number(c.approved),pct(c.approved,c.applications)+' of applications','green','approved'],['In Process',number(c.inProcess),'Current pending workflow','peach','inprocess'],['Approved & Payment Done',d==null?'—':number(d),'FULL payment completed','lav','paymentdone'],['Approved · Payment Pending',number(pending('All')),'Approved · no payment started','pink','paymentpending'],['Total Collection',money(m.total),number(m.receipts)+' receipts','cyan','collection'],['Today Collection',money(m.today),number(m.todayReceipts)+' receipts · '+fmtDate(m.asof),'blue','today'],['Demand',money(c.demand),'OTS demand control','green','demand'],['Recovery vs Demand',pct(m.total,c.demand),'Collection against demand','peach','recovery']];
  const rows=m.daily.slice(-12),max=Math.max(1,...rows.map(r=>N(r.amount))),bars=rows.map(r=>'<div class="prod-bar-col"><div class="prod-bar" style="height:'+Math.max(2,Math.round(N(r.amount)/max*145))+'px"></div><b>'+esc(fmtDate(r.date).replace(/ 2026$/,''))+'</b><span>'+esc(money(r.amount))+'</span></div>').join('');
- host.innerHTML='<div class="prod-hint"><i>↗</i><span>Tap or click any highlighted block for detailed information.</span></div><section class="prod-kpis">'+k.map(x=>card(...x)).join('')+'</section><section class="prod-section"><div class="prod-section-head"><h3>Zone-wise Position</h3><span>Applications · approval · payment · online · collection</span></div><div class="prod-zones">'+ZONES.map(zoneCard).join('')+'</div></section><section class="prod-section compact"><div class="prod-section-head"><div><h3>Zone-wise Officer Table</h3><span>Tap Online Paid amount for applicant/receipt detail</span></div><button type="button" class="prod-inline-action" id="prodExportDashboardPDF">Print Table / PDF</button></div>'+zoneTable()+'</section><div class="prod-bottom-grid"><section class="prod-section"><div class="prod-section-head"><h3>Pending Responsibility</h3><span>Exact current workflow</span></div><div class="prod-pendency">'+pendingGrid('All')+'</div></section><section class="prod-section"><div class="prod-section-head"><h3>Collection Trend</h3><span>Through '+esc(fmtDate(m.asof))+'</span></div><div class="prod-trend">'+(bars||'<div class="prod-modal-empty">No collection rows.</div>')+'</div></section></div>';
+ host.innerHTML='<div class="prod-hint"><i>↗</i><span>Tap or click any highlighted block for detailed information.</span></div><section class="prod-kpis">'+k.map(x=>card(...x)).join('')+'</section><section class="prod-section"><div class="prod-section-head"><h3>Zone-wise Position</h3><span>Applications · approval · payment · online · collection</span></div><div class="prod-zones">'+ZONES.map(zoneCard).join('')+'</div></section><section class="prod-section compact"><div class="prod-section-head"><div><h3>Zone-wise Officer Table</h3><span>Tap Online Paid amount for applicant/receipt detail</span></div><button type="button" class="prod-inline-action" id="prodExportDashboardPDF">Print Table / PDF</button></div>'+zoneTable()+'</section><div class="prod-bottom-grid"><section class="prod-section"><div class="prod-section-head"><div><h3>Pending Responsibility</h3><span>Exact current workflow</span></div><div class="prod-head-actions"><button type="button" class="prod-inline-action" id="prodPrintPending">Print</button><button type="button" class="prod-inline-action" id="prodDownloadPending">Download PDF</button></div></div><div class="prod-pendency">'+pendingGrid('All')+'</div></section><section class="prod-section"><div class="prod-section-head"><h3>Collection Trend</h3><span>Through '+esc(fmtDate(m.asof))+'</span></div><div class="prod-trend">'+(bars||'<div class="prod-modal-empty">No collection rows.</div>')+'</div></section></div>';
  host.querySelectorAll('[data-key]').forEach(el=>el.onclick=()=>openKey(el.dataset.key));
  const pdfBtn=$('prodExportDashboardPDF');if(pdfBtn)pdfBtn.onclick=exportZoneOfficerTablePDF;
+ const pp=$('prodPrintPending');if(pp)pp.onclick=exportPendingResponsibilityPrint;
+ const pd=$('prodDownloadPending');if(pd)pd.onclick=()=>downloadPendingResponsibilityPDF(pd);
  host.querySelectorAll('.prod-zone').forEach(el=>el.onclick=e=>{if(e.target.closest('[data-online]'))return;showZone(el.dataset.zone)});
  host.querySelectorAll('[data-online]').forEach(el=>el.onclick=e=>{e.stopPropagation();showOnline(el.dataset.online)});
  host.querySelectorAll('[data-stage]').forEach(el=>el.onclick=()=>{if(el.dataset.stage==='Total In Process')showApplications('inprocess',el.dataset.zone);else showStage(el.dataset.stage,el.dataset.zone)});
@@ -81,6 +83,9 @@ function render(){
 function ensureModal(){if($('prodModal'))return;const m=document.createElement('div');m.id='prodModal';m.className='prod-modal';m.innerHTML='<div class="prod-sheet"><div class="prod-modal-head"><div><h2 id="prodModalTitle">Details</h2><p id="prodModalSub"></p></div><div class="prod-modal-actions" id="prodModalActions"></div><button class="prod-close" type="button">×</button></div><div class="prod-modal-body" id="prodModalBody"></div></div>';document.body.appendChild(m);m.querySelector('.prod-close').onclick=closeModal;m.onclick=e=>{if(e.target===m)closeModal()}}
 function closeModal(){$('prodModal')?.classList.remove('open');document.body.classList.remove('prod-modal-lock')}
 function openModal(title,sub,html,pdfFn,pdfLabel='Export PDF'){ensureModal();$('prodModalTitle').textContent=title;$('prodModalSub').textContent=sub||'';$('prodModalBody').innerHTML=html;const a=$('prodModalActions');a.innerHTML='';if(pdfFn){const b=document.createElement('button');b.textContent=pdfLabel;b.onclick=pdfFn;a.appendChild(b)}$('prodModal').classList.add('open');document.body.classList.add('prod-modal-lock')}
+function addModalAction(label,fn){
+ const a=$('prodModalActions');if(!a)return null;const b=document.createElement('button');b.type='button';b.textContent=label;b.onclick=fn;a.appendChild(b);return b
+}
 function summary(items){return'<div class="prod-summary">'+items.map(x=>'<div class="prod-stat"><span>'+esc(x[0])+'</span><b>'+esc(x[1])+'</b></div>').join('')+'</div>'}
 function table(headers,rows){if(!rows.length)return'<div class="prod-modal-empty">No detailed rows available for this view.</div>';return'<div class="prod-tablewrap"><table class="prod-table"><thead><tr>'+headers.map(h=>'<th'+(h.num?' class="num"':'')+'>'+esc(h.label)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+headers.map(h=>'<td data-label="'+esc(h.label)+'"'+(h.num?' class="num"':'')+'>'+(r[h.key]??'—')+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>'}
 function phone(v){const raw=S(v),d=raw.replace(/\D/g,'').slice(-10);return /^[6-9]\d{9}$/.test(d)?'<a class="prod-call" href="tel:'+d+'">☎ '+esc(raw||d)+'</a>':esc(raw||'—')}
@@ -89,7 +94,26 @@ function zoneChoices(mode){return'<div class="prod-zone-choice-grid">'+ZONES.map
 function wirePayChoices(){document.querySelectorAll('[data-paymode]').forEach(el=>el.onclick=()=>showPaymentZone(el.dataset.paymode,el.dataset.zone))}
 async function openKey(k){if(k==='paymentdone'||k==='paymentpending'){openModal(k==='paymentdone'?'Approved & Payment Done':'Approved · Payment Pending','Select a zone to open applicant details',summary([[k==='paymentdone'?'Payment Done':'Payment Pending',number(k==='paymentdone'?(done('All')??0):pending('All'))],['Report Through',fmtDate(payload().snapshot)],['Rule',k==='paymentdone'?'FULL payment only':'Approved · no payment started'],['Zones','4']])+zoneChoices(k==='paymentdone'?'done':'pending'));wirePayChoices();return}if(k==='today')return showToday();if(k==='collection')return showCollection();if(k==='demand'||k==='recovery'){const c=control(),m=collection();openModal(k==='demand'?'Demand':'Recovery vs Demand','All Zones',summary([['Demand',money(c.demand)],['Collection',money(m.total)],['Recovery',pct(m.total,c.demand)],['Report Through',fmtDate(payload().snapshot)]]));return}return showApplications(k,'All')}
 async function showApplications(kind,z='All'){const D=await detailFor(),apps=D?.apps||D?.applications||[];let rows=apps.filter(a=>z==='All'||zoneOf(a)===z);if(kind==='approved')rows=rows.filter(a=>L(a['Application status'])==='approved');if(kind==='inprocess')rows=rows.filter(a=>L(a['Application status'])!=='approved'&&!/reject|cancel/.test(L(a['Application status'])));const c=control(z);let html=summary([['Applications',number(c.applications)],['Approved',number(c.approved)],['In Process',number(c.inProcess)],['View',z]]);if(rows.length)html+='<h3 class="prod-section-title">Application Detail</h3>'+table([{key:'app',label:'Application'},{key:'name',label:'Applicant / Owner'},{key:'mobile',label:'Mobile'},{key:'uid',label:'Property UID'},{key:'zone',label:'Zone'},{key:'ward',label:'Ward'},{key:'ri',label:'RI / TC'},{key:'status',label:'Status'}],rows.slice(0,1200).map(a=>({app:esc(appNo(a)),name:esc(appName(a)),mobile:phone(mobileOf(a)),uid:esc(a['Property UID']||'—'),zone:esc(zoneOf(a)||'—'),ward:esc(wardOf(a)||'—'),ri:esc(riOf(a)||'—'),status:esc(a['Application status']||'—')})));else html+='<div class="prod-modal-empty">Applicant-level detail is private to the browser where this date’s reports were uploaded.</div>';openModal(kind==='approved'?'Approved Applications':kind==='inprocess'?'In Process Applications':'Total Applications',z,html)}
-async function showStage(stage,z='All'){const D=await detailFor(),apps=D?.apps||[],isOther=stage==='Other';let rows=apps.filter(a=>L(a['Application status'])!=='approved'&&!/reject|cancel/.test(L(a['Application status']))&&(z==='All'||zoneOf(a)===z));rows=rows.filter(a=>{const p=L(a['Pending with']);if(stage==='With Applicant')return p.includes('applicant')||p.startsWith('respected');if(stage==='CTO')return p.includes('cto');if(stage==='RI')return /\bri\b/.test(p)||p.includes('(ri)');if(stage==='TS')return /\bts\b/.test(p)||p.includes('(ts)');if(isOther)return !p.includes('applicant')&&!p.includes('cto')&&!/\bri\b/.test(p)&&!p.includes('(ri)')&&!/\bts\b/.test(p)&&!p.includes('(ts)');return false});const st=stageStats(z);let html=summary([[stage,number(stage==='Other'?st.Other+(st.gap||0):st[stage]||0)],['Zone',z],['Total In Process',number(st.total)],['Report Through',fmtDate(payload().snapshot)]]);if(rows.length)html+='<h3 class="prod-section-title">Exact Applications at this Stage</h3>'+table([{key:'app',label:'Application'},{key:'name',label:'Applicant / Owner'},{key:'mobile',label:'Mobile'},{key:'zone',label:'Zone'},{key:'ward',label:'Ward'},{key:'ri',label:'RI / TC'},{key:'pending',label:'Pending With'}],rows.slice(0,1200).map(a=>({app:esc(appNo(a)),name:esc(appName(a)),mobile:phone(mobileOf(a)),zone:esc(zoneOf(a)||'—'),ward:esc(wardOf(a)||'—'),ri:esc(riOf(a)||'—'),pending:esc(a['Pending with']||'—')})));if(st.gap&&z!=='All')html+='<div class="prod-modal-empty">'+number(st.gap)+' additional '+esc(z)+' in-process application(s) exist in the Zone/Ward control but do not yet have safe individual property-zone evidence. They are counted in the total but not guessed into an officer stage.</div>';openModal(stage+' Pendency',z,html)}
+function sortStageRows(rows){
+ return [...rows].sort((a,b)=>{
+  const z=S(zoneOf(a)).localeCompare(S(zoneOf(b)));if(z)return z;
+  const r=S(riOf(a)).localeCompare(S(riOf(b)));if(r)return r;
+  const w=S(wardOf(a)).localeCompare(S(wardOf(b)),undefined,{numeric:true});if(w)return w;
+  return S(appName(a)).localeCompare(S(appName(b)))
+ })
+}
+async function showStage(stage,z='All'){
+ const D=await detailFor(),apps=D?.apps||[],isOther=stage==='Other';
+ let rows=apps.filter(a=>L(a['Application status'])!=='approved'&&!/reject|cancel/.test(L(a['Application status']))&&(z==='All'||zoneOf(a)===z));
+ rows=rows.filter(a=>{const p=L(a['Pending with']);if(stage==='With Applicant')return p.includes('applicant')||p.startsWith('respected');if(stage==='CTO')return p.includes('cto');if(stage==='RI')return /\bri\b/.test(p)||p.includes('(ri)');if(stage==='TS')return /\bts\b/.test(p)||p.includes('(ts)');if(isOther)return !p.includes('applicant')&&!p.includes('cto')&&!/\bri\b/.test(p)&&!p.includes('(ri)')&&!/\bts\b/.test(p)&&!p.includes('(ts)');return false});
+ rows=sortStageRows(rows);
+ const st=stageStats(z);
+ let html=summary([[stage,number(stage==='Other'?st.Other+(st.gap||0):st[stage]||0)],['Zone',z],['Total In Process',number(st.total)],['Report Through',fmtDate(payload().snapshot)]]);
+ if(rows.length)html+='<h3 class="prod-section-title">Exact Applications at this Stage</h3>'+table([{key:'app',label:'Application'},{key:'name',label:'Applicant / Owner'},{key:'mobile',label:'Mobile'},{key:'zone',label:'Zone'},{key:'ward',label:'Ward'},{key:'ri',label:'RI / TC'},{key:'pending',label:'Pending With'}],rows.slice(0,1200).map(a=>({app:esc(appNo(a)),name:esc(appName(a)),mobile:phone(mobileOf(a)),zone:esc(zoneOf(a)||'—'),ward:esc(wardOf(a)||'—'),ri:esc(riOf(a)||'—'),pending:esc(a['Pending with']||'—')})));
+ if(st.gap&&z!=='All')html+='<div class="prod-modal-empty">'+number(st.gap)+' additional '+esc(z)+' in-process application(s) exist in the Zone/Ward control but do not yet have safe individual property-zone evidence. They are counted in the total but not guessed into an officer stage.</div>';
+ openModal(stage+' Pendency',z,html,()=>exportStagePendencyPrint(stage,z,rows),'Print');
+ if(rows.length){const b=addModalAction('Download PDF',()=>downloadStagePendencyPDF(stage,z,rows,b))}
+}
 function officerKey(v){return L(v).replace(/\b(?:ri|tc)\b/g,' ').replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim()}
 function riRank(z,ri){
  const order=RI_PRINT_ORDER[z]||[],x=officerKey(ri);
@@ -201,6 +225,9 @@ function reportWindow(title,bodyHtml,orientation='portrait'){
  .call-table th:nth-child(1){width:5%}.call-table th:nth-child(2){width:18%}.call-table th:nth-child(3){width:12%}.call-table th:nth-child(4){width:20%}.call-table th:nth-child(5){width:20%}.call-table th:nth-child(6){width:13%}.call-table th:nth-child(7){width:12%}
  .call-table .phone-cell{font-size:10pt;font-weight:900;letter-spacing:.02em;color:#111}
  .call-table .remark{height:28px}
+ .stage-detail-table{table-layout:fixed}
+ .stage-detail-table th,.stage-detail-table td{font-size:8pt;padding:5px 4px}
+ .stage-detail-table th:nth-child(1){width:5%}.stage-detail-table th:nth-child(2){width:17%}.stage-detail-table th:nth-child(3){width:18%}.stage-detail-table th:nth-child(4){width:11%}.stage-detail-table th:nth-child(5){width:10%}.stage-detail-table th:nth-child(6){width:13%}.stage-detail-table th:nth-child(7){width:13%}.stage-detail-table th:nth-child(8){width:13%}
  @media print{body{background:#fff}.page{break-inside:avoid}}`;
  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+esc(title)+'</title><style>'+css+'</style></head><body>'+bodyHtml+'<script>window.onload=()=>setTimeout(()=>window.print(),220)<\/script></body></html>');
  w.document.close();
@@ -219,6 +246,76 @@ function exportZoneOfficerTablePDF(){
  const total='<tr class="total-row"><td>TOTAL</td><td>Agra Nagar Nigam</td><td class="center">'+number(c.applications)+'</td><td class="center">'+number(c.approved)+'</td><td class="center">'+number(c.inProcess)+'</td><td class="center">'+number(c.rejected)+'</td><td class="center">'+number(started('All'))+'</td><td class="center">'+number(pending('All'))+'</td><td class="num">'+money(m.total)+'</td><td class="num">'+money(m.today)+'</td><td class="num">'+money(Math.max(0,m.total-m.today))+'</td></tr>';
  const body='<section class="page">'+cleanHead('AGRA NAGAR NIGAM · OTS DATA','Zone-wise Officer Status and Collection Summary | '+snap)+'<table class="wide"><thead><tr><th>Zone</th><th>TS</th><th>Applications</th><th>Approved</th><th>In Process</th><th>Rejected</th><th>Paid Applicants</th><th>Unpaid Approved</th><th>Total Collection</th><th>'+esc(todayLabel)+'</th><th>Previous Days</th></tr></thead><tbody>'+zrows+'</tbody><tfoot>'+total+'</tfoot></table><div class="footer"><span>नगर निगम आगरा</span><span>OTS 2026-27</span></div></section>';
  reportWindow('Zone-wise Officer OTS Data',body,'landscape')
+}
+function safeReportName(v){return S(v).replace(/[<>:"/\\|?*]+/g,'-').replace(/\s+/g,' ').trim()}
+function reportFileBase(report,scope=''){
+ const date=fmtDate(payload().snapshot);
+ return safeReportName(report+(scope?' - '+scope:'')+' - '+date)
+}
+function pendingResponsibilityRows(){
+ return ZONES.map(z=>{const s=stageStats(z);return[z,s['With Applicant'],s.CTO,s.RI,s.TS,s.Other+(s.gap||0),s.total]})
+}
+function pendingResponsibilityTableHTML(){
+ const rows=pendingResponsibilityRows(),city=stageStats('All');
+ return '<table class="compact"><thead><tr><th>Zone</th><th>With Applicant</th><th>CTO</th><th>RI</th><th>TS</th><th>Other / Unallocated</th><th>Total In Process</th></tr></thead><tbody>'+
+ rows.map(r=>'<tr><td>'+esc(r[0])+'</td>'+r.slice(1).map(v=>'<td class="center">'+number(v)+'</td>').join('')+'</tr>').join('')+
+ '</tbody><tfoot><tr class="total-row"><td>TOTAL</td><td class="center">'+number(city['With Applicant'])+'</td><td class="center">'+number(city.CTO)+'</td><td class="center">'+number(city.RI)+'</td><td class="center">'+number(city.TS)+'</td><td class="center">'+number(city.Other+(city.gap||0))+'</td><td class="center">'+number(city.total)+'</td></tr></tfoot></table>'
+}
+function exportPendingResponsibilityPrint(){
+ const snap=fmtDate(payload().snapshot),title=reportFileBase('Pending Responsibility');
+ const body='<section class="page">'+cleanHead('PENDING RESPONSIBILITY','Zone-wise OTS Workflow Pendency | '+snap)+pendingResponsibilityTableHTML()+'<div class="footer"><span>नगर निगम आगरा · OTS 2026-27</span><span>'+esc(snap)+'</span></div></section>';
+ reportWindow(title,body,'landscape')
+}
+async function downloadPendingResponsibilityPDF(button){
+ const old=button?.textContent;if(button){button.disabled=true;button.textContent='Preparing…'}
+ try{
+  await ensurePDFDownloadLib();
+  const {jsPDF}=window.jspdf,doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'}),snap=fmtDate(payload().snapshot);
+  doc.setFont('helvetica','bold');doc.setTextColor(18,47,69);doc.setFontSize(17);doc.text('PENDING RESPONSIBILITY',148.5,14,{align:'center'});
+  doc.setFont('helvetica','normal');doc.setTextColor(75,85,94);doc.setFontSize(9);doc.text('Zone-wise OTS Workflow Pendency · '+snap,148.5,20,{align:'center'});
+  const city=stageStats('All'),body=pendingResponsibilityRows().map(r=>[r[0],...r.slice(1).map(v=>String(v))]);
+  body.push(['TOTAL',String(city['With Applicant']),String(city.CTO),String(city.RI),String(city.TS),String(city.Other+(city.gap||0)),String(city.total)]);
+  doc.autoTable({startY:25,head:[['Zone','With Applicant','CTO','RI','TS','Other / Unallocated','Total In Process']],body,theme:'grid',styles:{fontSize:10,cellPadding:3,textColor:[20,24,28],lineColor:[170,184,195],lineWidth:.25,halign:'center'},headStyles:{fillColor:[229,237,246],textColor:[38,55,70],fontStyle:'bold'},didParseCell:d=>{if(d.row.index===body.length-1){d.cell.styles.fillColor=[220,232,243];d.cell.styles.fontStyle='bold'}}});
+  doc.save(reportFileBase('Pending Responsibility')+'.pdf')
+ }catch(e){alert('Direct PDF download could not start. Use Print and choose Save as PDF. '+String(e?.message||e))}
+ finally{if(button){button.disabled=false;button.textContent=old}}
+}
+function stageReportScope(z){return z==='All'?'All Zones':z}
+function stageRowsForPDF(rows){
+ return rows.map((a,i)=>[String(i+1),S(appNo(a))||'—',S(appName(a))||'—',S(mobileOf(a))||'—',S(zoneOf(a))||'—',S(wardOf(a))||'—',S(riOf(a))||'—',S(a['Pending with'])||'—'])
+}
+function stageTableHTML(rows){
+ const data=stageRowsForPDF(rows);
+ return '<table class="stage-detail-table"><thead><tr><th>S.No.</th><th>Application</th><th>Applicant / Owner</th><th>Mobile</th><th>Zone</th><th>Ward</th><th>RI / TC</th><th>Pending With</th></tr></thead><tbody>'+
+ data.map(r=>'<tr>'+r.map((v,i)=>'<td class="'+(i===0?'center':'')+'">'+esc(v)+'</td>').join('')+'</tr>').join('')+'</tbody><tfoot><tr class="total-row"><td colspan="7">TOTAL APPLICATIONS</td><td class="center">'+number(rows.length)+'</td></tr></tfoot></table>'
+}
+function exportStagePendencyPrint(stage,z,rows){
+ const scope=stageReportScope(z),snap=fmtDate(payload().snapshot),report=stage+' Pendency',title=reportFileBase(report,scope);
+ const body='<section class="page stage-report-page">'+cleanHead(report.toUpperCase(),scope+' | '+snap)+'<div class="call-summary"><b>Total Applications: '+number(rows.length)+'</b><span>'+esc(scope)+'</span></div>'+stageTableHTML(rows)+'<div class="footer"><span>नगर निगम आगरा · OTS 2026-27</span><span>'+esc(report)+'</span></div></section>';
+ reportWindow(title,body,'landscape')
+}
+async function downloadStagePendencyPDF(stage,z,rows,button){
+ const old=button?.textContent;if(button){button.disabled=true;button.textContent='Preparing…'}
+ try{
+  await ensurePDFDownloadLib();
+  const {jsPDF}=window.jspdf,doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'}),scope=stageReportScope(z),snap=fmtDate(payload().snapshot),report=stage+' Pendency';
+  doc.setFont('helvetica','bold');doc.setTextColor(18,47,69);doc.setFontSize(16);doc.text(report.toUpperCase(),148.5,13,{align:'center'});
+  doc.setFont('helvetica','normal');doc.setTextColor(70,80,88);doc.setFontSize(9);doc.text(scope+' · '+snap+' · '+rows.length+' Applications',148.5,19,{align:'center'});
+  doc.autoTable({
+   startY:24,
+   head:[['S.No.','Application','Applicant / Owner','Mobile','Zone','Ward','RI / TC','Pending With']],
+   body:stageRowsForPDF(rows),
+   theme:'grid',
+   styles:{font:'helvetica',fontSize:8.3,textColor:[20,24,28],cellPadding:2.2,valign:'middle',lineColor:[170,184,195],lineWidth:.25},
+   headStyles:{fillColor:[229,237,246],textColor:[38,55,70],fontStyle:'bold',halign:'center',fontSize:8.1},
+   alternateRowStyles:{fillColor:[248,250,252]},
+   columnStyles:{0:{cellWidth:10,halign:'center'},1:{cellWidth:43},2:{cellWidth:42},3:{cellWidth:27,fontStyle:'bold'},4:{cellWidth:24},5:{cellWidth:34},6:{cellWidth:35},7:{cellWidth:49}},
+   margin:{left:8,right:8,bottom:10},
+   didDrawPage:()=>{doc.setFontSize(7);doc.setTextColor(95,105,114);doc.text('Agra Nagar Nigam · OTS 2026-27 · '+report,8,203);doc.text('Page '+doc.internal.getNumberOfPages(),289,203,{align:'right'})}
+  });
+  doc.save(reportFileBase(report,scope)+'.pdf')
+ }catch(e){alert('Direct PDF download could not start. Use Print and choose Save as PDF. '+String(e?.message||e))}
+ finally{if(button){button.disabled=false;button.textContent=old}}
 }
 function callingFileBase(z,ri){
  const d=fmtDate(payload().snapshot),safe=v=>S(v).replace(/[<>:"/\\|?*]+/g,'-').replace(/\s+/g,' ').trim();
