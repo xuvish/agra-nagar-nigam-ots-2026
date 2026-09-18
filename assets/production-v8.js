@@ -103,16 +103,16 @@ function sortStageRows(rows){
  })
 }
 async function showStage(stage,z='All'){
- const D=await detailFor(),apps=D?.apps||[],isOther=stage==='Other';
- let rows=apps.filter(a=>L(a['Application status'])!=='approved'&&!/reject|cancel/.test(L(a['Application status']))&&(z==='All'||zoneOf(a)===z));
+ const D=await detailFor(),apps=D?.apps||[],isOther=stage==='Other',effectiveZone=stage==='CTO'?'All':z;
+ let rows=apps.filter(a=>L(a['Application status'])!=='approved'&&!/reject|cancel/.test(L(a['Application status']))&&(effectiveZone==='All'||zoneOf(a)===effectiveZone));
  rows=rows.filter(a=>{const p=L(a['Pending with']);if(stage==='With Applicant')return p.includes('applicant')||p.startsWith('respected');if(stage==='CTO')return p.includes('cto');if(stage==='RI')return /\bri\b/.test(p)||p.includes('(ri)');if(stage==='TS')return /\bts\b/.test(p)||p.includes('(ts)');if(isOther)return !p.includes('applicant')&&!p.includes('cto')&&!/\bri\b/.test(p)&&!p.includes('(ri)')&&!/\bts\b/.test(p)&&!p.includes('(ts)');return false});
  rows=sortStageRows(rows);
- const st=stageStats(z);
- let html=summary([[stage,number(stage==='Other'?st.Other+(st.gap||0):st[stage]||0)],['Zone',z],['Total In Process',number(st.total)],['Report Through',fmtDate(payload().snapshot)]]);
+ const st=stageStats(effectiveZone),scopeLabel=stage==='CTO'?'Nagar Nigam Agra':effectiveZone;
+ let html=summary([[stage,number(stage==='Other'?st.Other+(st.gap||0):st[stage]||0)],['Scope',scopeLabel],['Total In Process',number(st.total)],['Report Through',fmtDate(payload().snapshot)]]);
  if(rows.length)html+='<h3 class="prod-section-title">Exact Applications at this Stage</h3>'+table([{key:'app',label:'Application'},{key:'name',label:'Applicant / Owner'},{key:'mobile',label:'Mobile'},{key:'zone',label:'Zone'},{key:'ward',label:'Ward'},{key:'ri',label:'RI / TC'},{key:'pending',label:'Pending With'}],rows.slice(0,1200).map(a=>({app:esc(appNo(a)),name:esc(appName(a)),mobile:phone(mobileOf(a)),zone:esc(zoneOf(a)||'—'),ward:esc(wardOf(a)||'—'),ri:esc(riOf(a)||'—'),pending:esc(a['Pending with']||'—')})));
- if(st.gap&&z!=='All')html+='<div class="prod-modal-empty">'+number(st.gap)+' additional '+esc(z)+' in-process application(s) exist in the Zone/Ward control but do not yet have safe individual property-zone evidence. They are counted in the total but not guessed into an officer stage.</div>';
- openModal(stage+' Pendency',z,html,()=>exportStagePendencyPrint(stage,z,rows),'Print');
- if(rows.length){const b=addModalAction('Download PDF',()=>downloadStagePendencyPDF(stage,z,rows,b))}
+ if(st.gap&&effectiveZone!=='All')html+='<div class="prod-modal-empty">'+number(st.gap)+' additional '+esc(effectiveZone)+' in-process application(s) exist in the Zone/Ward control but do not yet have safe individual property-zone evidence. They are counted in the total but not guessed into an officer stage.</div>';
+ openModal(stage+' Pendency',scopeLabel,html,()=>exportStagePendencyPrint(stage,effectiveZone,rows),'Print');
+ if(rows.length){const b=addModalAction('Download PDF',()=>downloadStagePendencyPDF(stage,effectiveZone,rows,b))}
 }
 function officerKey(v){return L(v).replace(/\b(?:ri|tc)\b/g,' ').replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim()}
 function riRank(z,ri){
@@ -280,7 +280,11 @@ async function downloadPendingResponsibilityPDF(button){
  }catch(e){alert('Direct PDF download could not start. Use Print and choose Save as PDF. '+String(e?.message||e))}
  finally{if(button){button.disabled=false;button.textContent=old}}
 }
-function stageReportScope(z){return z==='All'?'All Zones':z}
+function stageReportScope(stage,z){if(stage==='CTO')return'Nagar Nigam Agra';return z==='All'?'All Zones':z}
+function stageReportFileBase(stage,z){
+ const report=stage+' Pendency';
+ return stage==='CTO'?reportFileBase(report):reportFileBase(report,stageReportScope(stage,z))
+}
 function stageRowsForPDF(rows){
  return rows.map((a,i)=>[String(i+1),S(appNo(a))||'—',S(appName(a))||'—',S(mobileOf(a))||'—',S(zoneOf(a))||'—',S(wardOf(a))||'—',S(riOf(a))||'—',S(a['Pending with'])||'—'])
 }
@@ -290,7 +294,7 @@ function stageTableHTML(rows){
  data.map(r=>'<tr>'+r.map((v,i)=>'<td class="'+(i===0?'center':'')+'">'+esc(v)+'</td>').join('')+'</tr>').join('')+'</tbody><tfoot><tr class="total-row"><td colspan="7">TOTAL APPLICATIONS</td><td class="center">'+number(rows.length)+'</td></tr></tfoot></table>'
 }
 function exportStagePendencyPrint(stage,z,rows){
- const scope=stageReportScope(z),snap=fmtDate(payload().snapshot),report=stage+' Pendency',title=reportFileBase(report,scope);
+ const scope=stageReportScope(stage,z),snap=fmtDate(payload().snapshot),report=stage+' Pendency',title=stageReportFileBase(stage,z);
  const body='<section class="page stage-report-page">'+cleanHead(report.toUpperCase(),scope+' | '+snap)+'<div class="call-summary"><b>Total Applications: '+number(rows.length)+'</b><span>'+esc(scope)+'</span></div>'+stageTableHTML(rows)+'<div class="footer"><span>नगर निगम आगरा · OTS 2026-27</span><span>'+esc(report)+'</span></div></section>';
  reportWindow(title,body,'landscape')
 }
@@ -313,7 +317,7 @@ async function downloadStagePendencyPDF(stage,z,rows,button){
    margin:{left:8,right:8,bottom:10},
    didDrawPage:()=>{doc.setFontSize(7);doc.setTextColor(95,105,114);doc.text('Agra Nagar Nigam · OTS 2026-27 · '+report,8,203);doc.text('Page '+doc.internal.getNumberOfPages(),289,203,{align:'right'})}
   });
-  doc.save(reportFileBase(report,scope)+'.pdf')
+  doc.save(stageReportFileBase(stage,z)+'.pdf')
  }catch(e){alert('Direct PDF download could not start. Use Print and choose Save as PDF. '+String(e?.message||e))}
  finally{if(button){button.disabled=false;button.textContent=old}}
 }
