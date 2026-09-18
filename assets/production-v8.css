@@ -206,3 +206,19 @@ html,body{overflow-x:hidden!important;max-width:100%!important;color:#102f4b!imp
 .prod-inline-action{border:1px solid #c9dce7;background:linear-gradient(135deg,#eef8ff,#eafaf2);color:#174e72;border-radius:10px;padding:8px 12px;font-size:10px;font-weight:900;cursor:pointer;box-shadow:0 5px 14px rgba(35,83,115,.07);white-space:nowrap}
 .prod-inline-action:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(35,83,115,.10)}
 @media(max-width:720px){.prod-inline-action{width:100%;font-size:12px;padding:10px 12px}}
+
+/* Pending calling list RI actions */
+.calling-group{margin:0 0 18px;border:1px solid #d4e1e9;border-radius:14px;overflow:hidden;background:#fff}
+.calling-group-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;background:linear-gradient(135deg,#eaf5ff,#edf9f2);border-bottom:1px solid #d4e1e9}
+.calling-group-head>div:first-child{display:flex;flex-direction:column;gap:2px;min-width:0}
+.calling-group-head b{font-size:15px!important;color:#123f61!important;font-weight:950!important}
+.calling-group-head span{font-size:10px!important;color:#49687d!important;font-weight:800!important}
+.calling-group-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.calling-group-actions button{border:1px solid #c5d9e5;background:#fff;color:#174f72;border-radius:9px;padding:8px 10px;font-size:10px;font-weight:900;cursor:pointer;box-shadow:0 3px 10px rgba(31,79,110,.06)}
+.calling-group-actions button:hover{background:#f7fbfe}
+.calling-group-actions button:disabled{opacity:.55;cursor:wait}
+@media(max-width:720px){
+ .calling-group-head{align-items:flex-start;flex-direction:column}
+ .calling-group-actions{width:100%;display:grid;grid-template-columns:1fr 1fr}
+ .calling-group-actions button{width:100%;font-size:11px;padding:10px 8px}
+}
