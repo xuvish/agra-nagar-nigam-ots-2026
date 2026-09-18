@@ -269,3 +269,17 @@ html,body{overflow-x:hidden!important;max-width:100%!important;color:#102f4b!imp
 @media(prefers-reduced-motion:reduce){
  .ots-loading-spinner:before,.ots-loading-spinner:after,.ots-loading-dots i{animation:none}
 }
+
+/* Zone detail totals + today collection */
+.prod-total-row td{
+ background:#e8f2f8!important;
+ color:#123f61!important;
+ font-weight:950!important;
+ border-top:2px solid #93adbe!important;
+}
+.prod-zone .today-line{
+ background:linear-gradient(135deg,#edf7ff,#f5fbff);
+ border-color:#c7dfea;
+}
+.prod-zone .today-line span{color:#35647f}
+.prod-zone .today-line b{color:#155c87}
