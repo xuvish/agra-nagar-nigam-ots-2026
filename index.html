@@ -11,13 +11,22 @@
 <link rel="stylesheet" href="assets/official-final.css?v=20260918-0300-print-v1">
 <link rel="stylesheet" href="assets/pastel-final.css?v=20260918-0312-glass-v2">
 
-<link rel="stylesheet" href="assets/production-v8.css?v=20260918-1400-pendency-print-v6">
+<link rel="stylesheet" href="assets/production-v8.css?v=20260918-1435-hindi-loader-v7">
 <style id="v8Critical">
 .toolbar,.nav,.panel,#kpis,#asof,#zone,#reportScheduleStrip,.hero,.footer{display:none!important}
 #space,.bg-grid,.orb,.cursor-dot,.cursor-ring{display:none!important}
 </style>
 </head>
 <body>
+<div id="otsLoadingScreen" role="status" aria-live="polite" aria-label="OTS डेटा लोड हो रहा है">
+ <div class="ots-loading-card">
+  <div class="ots-loading-mark">ANN</div>
+  <div class="ots-loading-spinner" aria-hidden="true"></div>
+  <h2>OTS डेटा लोड हो रहा है<span class="ots-loading-dots" aria-hidden="true"><i></i><i></i><i></i></span></h2>
+  <p>कृपया प्रतीक्षा करें, नवीनतम रिपोर्ट तैयार की जा रही है।</p>
+  <div class="ots-loading-rule" aria-hidden="true"></div>
+ </div>
+</div>
 <canvas id="space"></canvas><div class="bg-grid"></div><div class="orb a"></div><div class="orb b"></div><div class="orb c"></div>
 <div class="cursor-dot" id="cd"></div><div class="cursor-ring" id="cr"></div>
 <div class="shell">
@@ -47,5 +56,5 @@
 <script src="assets/app-render.js?v=20260917-0900"></script>
 <script src="assets/app-ui.js?v=20260917-0900"></script>
 <script src="assets/fixes-bootstrap.js?v=20260918-1210-reportdate-v6"></script>
-<script src="assets/production-v8.js?v=20260918-1400-pendency-print-v6"></script>
+<script src="assets/production-v8.js?v=20260918-1435-hindi-loader-v7"></script>
 </body></html>
