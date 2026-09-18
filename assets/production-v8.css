@@ -222,3 +222,11 @@ html,body{overflow-x:hidden!important;max-width:100%!important;color:#102f4b!imp
  .calling-group-actions{width:100%;display:grid;grid-template-columns:1fr 1fr}
  .calling-group-actions button{width:100%;font-size:11px;padding:10px 8px}
 }
+
+/* Pending Responsibility print/download actions */
+.prod-head-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.prod-head-actions .prod-inline-action{min-width:92px}
+@media(max-width:720px){
+ .prod-head-actions{width:100%;display:grid;grid-template-columns:1fr 1fr}
+ .prod-head-actions .prod-inline-action{width:100%;min-width:0}
+}
