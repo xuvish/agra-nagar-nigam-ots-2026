@@ -1,0 +1,55 @@
+# OTS 7-report local automation
+
+This is an **optional local helper** for the existing production dashboard. It does not replace the dashboard, edit its calculation engine, or save government login credentials. It opens a real Chromium window on your own Mac/Windows computer.
+
+## What it does
+
+- First-time setup: after YOU sign in to `upulbots.in`, record click paths for each of the seven report exports. The click recorder retains CSS selectors and page paths only, never input values, passwords, cookies, OTPs or response bodies.
+- First-time setup also downloads all seven reports and sends them to the existing website through its original **Manage Reports → Submit Reports & Recalculate** flow.
+- Later: after YOU sign in, replay the recorded clicks to download all seven reports, then open the dashboard for your separate dashboard admin login and upload them. It waits for the existing dashboard's explicit live-publication success message.
+- Temporary downloaded files are stored only on your computer and removed on normal program exit. Nothing is committed to GitHub.
+
+The website's content-based seven-report identifier, reconciliation, manual mappings and publish code remain authoritative. Do not infer that an Excel download or dashboard upload succeeded merely because a button was clicked.
+
+## Prerequisites
+
+Node.js 20+ and a desktop machine (Mac or Windows) with a GUI. This helper is **not** meant to run on GitHub Pages, iPhone/iPad Safari, GitHub Actions or an unattended server. Install only on a computer authorized to access the departmental reports.
+
+From the repository's `automation` folder:
+
+```bash
+npm install
+npx playwright install chromium
+npm run setup
+```
+
+Follow the terminal prompts and use the opened browser to log in yourself. For each named report, press Enter *before* clicking through the OTS reporting screens and exporting that report. Click only the actions needed for that export; avoid unrelated clicks. When the seventh download is complete, the existing OTS dashboard opens in a second tab. Log in to its **separate dashboard administrator account**, leave the Manage Reports dialog open and press Enter in the terminal. The helper selects the seven files and invokes the normal submit/recalculate pipeline.
+
+After a successful setup, later runs use:
+
+```bash
+npm run refresh
+```
+
+The selector plan is at `~/.agra-ots-automation/selectors.json` (Windows: your user home folder). It contains no government passwords or taxpayer rows. Do **not** copy it to a public repository if internal page paths are sensitive.
+
+## Safeguards and limitations
+
+- You must complete login, OTP and CAPTCHA yourself. No bypass is attempted. A separate dashboard administrator login is also required.
+- First setup can record clicks and navigation, **not changed filter input values**. If a report needs a manually chosen date range or select menu value, use appropriate defaults before recording or extend/review this script locally. Verify the date range on the downloaded reports.
+- Portal layout/IDs may change. If replay stops, run `npm run setup` again. Never silently treat failed downloads or a failed live publish as success.
+- Downloads and reports are temporary local files; a crash may leave files in the system temp directory named `agra-ots-reports-*`. Delete those securely according to your workplace retention policy.
+- The helper is untested against the authenticated departmental pages until you use your account. There is no claim of an official government API or fully unattended integration.
+- Keep the private applicant/receipt spreadsheets out of the public GitHub repository. The dashboard's existing browser-local/controlled publishing path is used as-is.
+
+## Report order
+
+1. Applications
+2. Zone/Ward Application Summary
+3. Collection Report
+4. FULL Payment Data
+5. PART Payment Data
+6. In-Process Report
+7. Approved Application Summary
+
+The existing website identifies report types from **content**, not user filenames. Wrong/duplicate reports should be rejected by its validator.
