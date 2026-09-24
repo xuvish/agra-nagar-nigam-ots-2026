@@ -50,9 +50,27 @@ function aggregate(E){
 }
 function cache(payload,updatedAt,source,isFinal){try{localStorage.setItem(CACHE_KEY,JSON.stringify({payload,updatedAt,isFinal:!!isFinal,source}))}catch(e){}}
 function apply(payload,updatedAt,source='live',isFinal=false){if(!payload)return;window.SHARED_LIVE=payload;window.__otsLastUpdatedAt=updatedAt||null;window.__otsSharedState={source,updatedAt:updatedAt||null,error:null,isFinal:!!isFinal};cache(payload,updatedAt,source,isFinal);for(const k of ['snapshot','city','zones','cityDaily','zoneDaily','cashiers','zoneCashiers','paymentMetrics','workflowCity','stageByZone','workflowUnallocated','onlineCity','onlineByZone','riRows','wardRows','meta'])if(payload[k]!=null)PUBLIC[k]=payload[k];document.dispatchEvent(new CustomEvent('ots:shared-applied',{detail:window.__otsSharedState}));document.dispatchEvent(new CustomEvent('ots:shared-ready',{detail:window.__otsSharedState}))}
+function sourceIsNewer(candidate,current){
+ if(!candidate?.snapshot)return false;
+ if(!current?.snapshot)return true;
+ if(candidate.snapshot!==current.snapshot)return candidate.snapshot>current.snapshot;
+ const cc=N(candidate?.city?.collection),bc=N(current?.city?.collection);
+ const cr=N(candidate?.city?.receipts),br=N(current?.city?.receipts);
+ return cr>br || (cr===br && cc>bc+0.005);
+}
 async function load(){
- try{const r=await fetch(LIVE_URL,{cache:'no-store'});if(!r.ok)throw Error('Live snapshot request failed');const j=await r.json(),row=j?.snapshot;if(row?.payload){apply(row.payload,row.updated_at,'live',false);return}}catch(e){window.__otsSharedState.error=String(e?.message||e)}
- try{const c=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');if(c?.payload?.snapshot){apply(c.payload,c.updatedAt||null,'cache',!!c.isFinal);return}}catch(e){}
+ const bundled=window.OTS_BUNDLED_SNAPSHOT;
+ let cached=null;
+ try{cached=JSON.parse(localStorage.getItem(CACHE_KEY)||'null')}catch(e){}
+ if(bundled?.snapshot)apply(bundled,null,'bundled-seven-pdf',false);
+ if(cached?.payload&&sourceIsNewer(cached.payload,window.SHARED_LIVE))apply(cached.payload,cached.updatedAt||null,'cache',!!cached.isFinal);
+ try{
+  const r=await fetch(LIVE_URL,{cache:'no-store'});
+  if(!r.ok)throw Error('Live snapshot request failed');
+  const j=await r.json(),row=j?.snapshot;
+  if(row?.payload&&sourceIsNewer(row.payload,window.SHARED_LIVE)){apply(row.payload,row.updated_at,'live',false);return}
+ }catch(e){window.__otsSharedState.error=String(e?.message||e)}
+ if(window.SHARED_LIVE)return;
  window.SHARED_LIVE=null;window.__otsSharedState={source:'empty',updatedAt:null,error:window.__otsSharedState.error||null,isFinal:false};document.dispatchEvent(new CustomEvent('ots:shared-ready',{detail:window.__otsSharedState}))
 }
 async function publish(payload){const cred=window.__otsAdminCred;if(!cred?.username||!cred?.password)throw Error('Administrator login is required before publishing.');const r=await fetch(PUBLISH_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:cred.username,password:cred.password,snapshot_date:payload.snapshot,payload,source_files:payload.meta?.sourceFiles||[]})});const j=await r.json().catch(()=>({}));if(!r.ok||!j.ok){const e=j?.error;let msg='Live publish failed';if(typeof e==='string'&&e)msg=e;else if(e&&typeof e==='object')msg=String(e.message||e.details||e.hint||JSON.stringify(e));throw Error(msg)}return j}
