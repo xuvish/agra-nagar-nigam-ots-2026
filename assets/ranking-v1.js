@@ -67,8 +67,8 @@ function render(){
  if(compare){
   if(m.rank<prior.rank){trend='up';trendText='↑ '+(prior.rank-m.rank)+' position(s) gained vs '+fmtDate(prior.asOf)}
   else if(m.rank>prior.rank){trend='down';trendText='↓ '+(m.rank-prior.rank)+' position(s) lost vs '+fmtDate(prior.asOf)}
-  else if(m.lead!=null&&prior.lead!=null&&m.lead<prior.lead){trend='down';trendText='↓ Rank unchanged · lead over next ULB narrowed'}
-  else if(m.lead!=null&&prior.lead!=null&&m.lead>prior.lead){trend='up';trendText='↑ Rank unchanged · lead over next ULB increased'}
+  else if(m.lead!=null&&prior.lead!=null&&m.below&&m.below.name===prior.belowName&&m.lead<prior.lead){trend='down';trendText='↓ Rank unchanged · lead over next ULB narrowed'}
+  else if(m.lead!=null&&prior.lead!=null&&m.below&&m.below.name===prior.belowName&&m.lead>prior.lead){trend='up';trendText='↑ Rank unchanged · lead over next ULB increased'}
   else trendText='— Position unchanged vs '+fmtDate(prior.asOf);
  }
  const top=m.rows.slice(0,5).map(x=>'<div class="ots-rank-row '+(isAgra(x)?'is-agra':'')+'"><span class="ots-rank-place">#'+rankOf(m.rows,x)+'</span><span class="ots-rank-name">'+esc(x.name)+'</span><b>'+money(x.amount)+'</b></div>').join('');
@@ -83,7 +83,7 @@ async function prepare(){
  const book=XLSX.read(await f.arrayBuffer(),{type:'array',raw:true,cellDates:true}),parsed=parseReport(book),prev=shared()||saved();
  const old=prev&&!prev.referenceOnly&&prev.asOf&&prev.universe===75?metrics(prev):null;
  if(old&&date<prev.asOf)throw Error('The report date cannot precede the published ranking date.');
- const previous=old&&date>prev.asOf?{asOf:prev.asOf,universe:75,rank:old.rank,lead:old.lead,amount:old.a.amount}:(old?prev.previous:null);
+ const previous=old&&date>prev.asOf?{asOf:prev.asOf,universe:75,rank:old.rank,lead:old.lead,belowName:old.below?.name||null,amount:old.a.amount}:(old?prev.previous:null);
  return {...parsed,asOf:date,previous,importedAt:new Date().toISOString()};
 }
 function install(){
