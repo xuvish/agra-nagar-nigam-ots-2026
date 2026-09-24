@@ -29,7 +29,8 @@ function waitFor(fn,ms=4500){
   await load('assets/fix-point8.js?v=20260917-1145');
   await load('assets/fix-engine-v3.js?v=20260918-1210-reportdate-v6');
   await load('assets/fix-admin-production-v7.js?v=20260918-0840-admin-v7c');
-  await load('assets/fix-smart-upload.js?v=20260924-pdf-direct-v1');
+  await load('assets/ots-seven-pdf.js?v=20260924-seven-pdf-v1');
+  await load('assets/fix-smart-upload.js?v=20260924-seven-pdf-v1');
   await load('assets/fix-tight-mapper.js?v=20260917-2010-v2');
   await load('assets/fix-source-authority.js?v=20260917-2335-v1');
   await load('assets/fix-multi-report-intelligence.js?v=20260917-2350-v1');
@@ -42,6 +43,7 @@ function waitFor(fn,ms=4500){
   await load('assets/fix-property-master-main-uploader.js?v=20260918-0152-direct-v2');
   await load('assets/fix-authority-v8.js?v=20260918-0910-authority-v8');
   await load('assets/fix-persist-v8.js?v=20260918-0910-persist-v8');
+  await load('assets/ots-seven-pdf-audit.js?v=20260924-seven-pdf-v1');
   window.processWorkbook=window.processReportSet||window.processWorkbook;
   const submit=document.querySelector('#reportModal .btn.primary');
   if(submit&&window.processWorkbook){submit.onclick=window.processWorkbook;submit.textContent='Submit Reports & Recalculate';}

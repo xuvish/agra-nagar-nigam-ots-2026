@@ -94,7 +94,12 @@ async function readWorkbook(file){
 
 async function detect(file){
   if(/\.pdf$/i.test(file.name)){
-    try{const converted=await convertPaymentPdf(file);return{type:paymentKind(converted.rows,0),file:converted.file,repaired:true}}
+    try{
+      const report=await window.OTSSevenPdf.convert(file);
+      if(report)return{type:report.type,file:report.file,repaired:true};
+      const converted=await convertPaymentPdf(file);
+      return{type:paymentKind(converted.rows,0),file:converted.file,repaired:true};
+    }
     catch(e){return{type:'unknown',file,error:String(e.message||e)}}
   }
   let parsed;
@@ -121,7 +126,11 @@ async function canonicalizeInput(){
   const files=[...input.files];if(files.length!==7)return false;
   input.dataset.smartBusy='1';
   try{
-    const found=await Promise.all(files.map(detect));
+    const found=[];
+    for(let i=0;i<files.length;i++){
+      if(progress)progress.textContent=`Reading report ${i+1} of ${files.length}: ${files[i].name}…`;
+      found.push(await detect(files[i]));
+    }
     const counts={};for(const x of found)counts[x.type]=(counts[x.type]||0)+1;
     const needed=['apps','zone','collection','full','part','inprocess','approved'];
     const ok=needed.every(k=>counts[k]===1)&&!counts.unknown;
