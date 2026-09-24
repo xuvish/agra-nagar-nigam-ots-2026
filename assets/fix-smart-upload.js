@@ -96,7 +96,7 @@ async function detect(file){
   if(/\.pdf$/i.test(file.name)){
     try{
       const report=await window.OTSSevenPdf.convert(file);
-      if(report)return{type:report.type,file:report.file,converted:true};
+      if(report)return{type:report.type,file:report.file,converted:true,count:report.count};
       const converted=await convertPaymentPdf(file);
       return{type:paymentKind(converted.rows,0),file:converted.file,converted:true};
     }
@@ -132,6 +132,8 @@ async function canonicalizeInput(){
       if(progress)progress.textContent=`Reading report ${i+1} of ${files.length}: ${files[i].name}…`;
       found.push(await detect(files[i]));
     }
+    const pay=found.filter(x=>x.type==='payment').sort((a,b)=>a.count-b.count);
+    if(pay.length===2&&pay[0].count!==pay[1].count){pay[0].type='full';pay[1].type='part'}
     const counts={};for(const x of found)counts[x.type]=(counts[x.type]||0)+1;
     const needed=['apps','zone','collection','full','part','inprocess','approved'];
     const ok=needed.every(k=>counts[k]===1)&&!counts.unknown;
