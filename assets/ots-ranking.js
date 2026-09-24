@@ -246,7 +246,7 @@
        '<button type="button" id="otsRankOpenDetails" class="ots-rank-lower"><span><b>Top 5 ULBs</b><small id="otsRankLeader">Tap for ranking details</small></span><strong>View all ›</strong></button>',
       '</div>'
     ].join('');
-    kpis.insertBefore(root,kpis.children[3]||null);
+    kpis.insertBefore(root,kpis.firstChild);
     root.querySelector('#otsRankOpenUpload').onclick=e=>openModal(modals.upload,e.currentTarget);
     root.querySelector('#otsRankOpenDetails').onclick=e=>openModal(modals.details,e.currentTarget);
     paint(current);
@@ -268,6 +268,7 @@
     window.addEventListener('load', ensureMount);
     retrieve();
   }
+  window.__otsRankingRefresh=retrieve;
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});
   else start();
 })();

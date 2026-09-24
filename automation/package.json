@@ -3,10 +3,13 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "setup": "node ots-seven-reports.mjs setup",
-    "refresh": "node ots-seven-reports.mjs run"
+    "refresh": "node ots-seven-reports.mjs run",
+    "bridge": "node bridge.mjs"
   },
   "dependencies": {
     "playwright": "1.55.1"
