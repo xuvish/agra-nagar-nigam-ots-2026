@@ -57,3 +57,29 @@ The eighth report is optional and recorded in the same local selectors configura
 ## Eighth report integration
 
 The new dashboard ranking panel uses the separate 75-ULB DHQ dataset to show Agra's received-amount rank, Top Five leaderboard, immediate higher/lower collection gaps, and directional arrows only when two dated statewide snapshots exist. Original seven input files, calculations and original local private data handling are unchanged. If the optional eighth export is absent, the previous ranking remains available and is explicitly labelled as a historical reference until a dated DHQ report is supplied.
+
+
+## Dashboard's "Update Dashboard" button (Mac/Windows)
+
+The public GitHub Pages website cannot directly sign into the separate government portal, use its cookies, or fetch protected exports. This feature therefore requires the **local helper** running on your own computer; it is not a remotely hosted or unattended government login.
+
+One-time setup (record the seven export clicks, plus the optional statewide ranking export):
+
+~~~bash
+cd automation
+npm install
+npx playwright install chromium
+npm run setup
+~~~
+
+Then, whenever you want to update from the website, keep a terminal open and run:
+
+~~~bash
+npm run bridge
+~~~
+
+Visit https://xuvish.github.io/agra-nagar-nigam-ots-2026/ots/ and click **Update Dashboard**. An embedded local page (127.0.0.1 only) requests your government ID/password and your *separate* dashboard administrator ID/password. Credentials do **not** pass through the public GitHub Pages JavaScript, are not stored in the repository, and are never sent to a third-party login relay. If Chrome blocks the embedded local page, choose **Open local helper** and use the same form directly at http://127.0.0.1:8765/control.
+
+The helper opens visible Chromium on the official OTS domain, attempts to prefill an unambiguous login form and then **waits for you to complete official login, CAPTCHA and OTP yourself**. Press **I have completed official login · Continue** in the local page. The helper then replays the recorded exports, validates all seven via the existing content-based importer, and publishes through the existing administrator workflow. If an eighth ranking report was recorded it is uploaded separately through the ranking popup after the seven reports are published. Progress and failures are shown with actual states—nothing is labelled successful until the existing dashboard confirms publication.
+
+The local helper must remain running while a refresh is under way. Do not paste credentials into ChatGPT or commit files in your local report directory. Closing the terminal stops the helper. Changes to government portal pages/export controls can invalidate recorded selectors; rerun npm run setup if that happens. If the page's original seven-report reconciliation fails, the helper stops and reports the failure instead of publishing guessed totals. There is no claim of a completed authenticated end-to-end test without your account.
