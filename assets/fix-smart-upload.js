@@ -124,6 +124,7 @@ async function detect(file){
 async function canonicalizeInput(){
   const input=document.getElementById('masterFile');if(!input||input.dataset.smartBusy==='1')return false;
   const files=[...input.files];if(files.length!==7)return false;
+  const progress=document.getElementById('uploadMsg');
   input.dataset.smartBusy='1';
   try{
     const found=[];
