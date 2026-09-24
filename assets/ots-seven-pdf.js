@@ -24,7 +24,7 @@ function parsePages(pages,spec){
    const items=pages[n].slice().sort(sort);
    const anchors=items.filter(x=>x.x>=spec.anchor.min&&x.x<spec.anchor.max&&spec.anchor.pattern.test(x.value)&&x.y>(n===0?198:15)).sort(sort);
    if(!anchors.length)throw Error('No report rows on PDF page '+(n+1));
-   if(n&&last){const before=anchors[0].y-11;for(const item of items){if(item.y>12&&item.y<before&&item.x>=70)last[column(spec.edges,item.x)].push(item)}}
+   if(n&&last){const before=anchors[0].y-11;for(const item of items){if(item.y>12&&item.y<before&&item.x>=70)last[column(spec.edges,item.x)].push({...item,y:item.y+n*1000})}}
    let limit=900;
    if(n===pages.length-1){const footer=items.find(x=>x.y>anchors.at(-1).y+8&&x.value.toLowerCase()==='total');if(footer)limit=Math.min(limit,footer.y-2)}
    for(let i=0;i<anchors.length;i++){
