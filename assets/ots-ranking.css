@@ -1,0 +1,42 @@
+/* Independent ranking panel, scoped to the real /ots/ production dashboard. */
+#otsRankingSection{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(280px,0.9fr);gap:12px;margin:13px 0 16px;font-family:inherit;color:#173b5d}
+#otsRankingSection *,#otsRankingSection *:before,#otsRankingSection *:after{box-sizing:border-box}
+#otsRankingSection>.ots-rank-card,#otsRankingSection>.ots-rank-upload{background:linear-gradient(145deg,#fff,#f5faff);border:1px solid #cddfec;border-radius:14px;padding:17px 19px;box-shadow:0 8px 23px rgba(27,77,114,.07);min-width:0}
+#otsRankingSection .ots-rank-card{border-top:4px solid #2776aa}
+#otsRankingSection .ots-rank-upload{border-top:4px solid #8d7bbd;background:linear-gradient(145deg,#fff,#fbf9ff)}
+#otsRankingSection .ots-rank-head{display:flex;gap:10px;align-items:center;margin-bottom:12px}
+#otsRankingSection .ots-rank-head h3{margin:0;color:#19436b;font-size:16px;font-weight:850;line-height:1.25}
+#otsRankingSection .ots-rank-head small{display:block;margin-top:3px;color:#73899e;font-size:10px}
+#otsRankingSection .ots-rank-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#e9f5ff;flex:none;font-size:19px;color:#316d9c}
+#otsRankingSection .ots-rank-upload .ots-rank-icon{background:#f2ebff;color:#7256a1}
+#otsRankingSection .ots-rank-overview{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+#otsRankingSection .ots-rank-position{font-size:26px;font-weight:900;letter-spacing:-.02em;color:#163f63}
+#otsRankingSection .ots-rank-delta{display:inline-flex;align-items:center;gap:4px;padding:6px 9px;background:#f0f4f7;border-radius:8px;color:#647b90;font-size:11px;font-weight:850}
+#otsRankingSection .ots-rank-delta.up{color:#087f4a;background:#e7f8ed}
+#otsRankingSection .ots-rank-delta.down{color:#b62336;background:#fff0f1}
+#otsRankingSection .ots-rank-delta.flat{color:#7d6b24;background:#fff8df}
+#otsRankingSection .ots-rank-amount{margin:7px 0 12px;color:#42627d;font-size:11px;font-weight:650}
+#otsRankingSection .ots-rank-gaps{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:12px 0}
+#otsRankingSection .ots-rank-gaps>div{padding:10px;background:#edf6fe;border:1px solid #d8e8f2;border-radius:10px}
+#otsRankingSection .ots-rank-gaps small{display:block;color:#6b8499;font-size:10px;line-height:1.35}
+#otsRankingSection .ots-rank-gaps strong{display:block;color:#214f73;font-size:12px;margin-top:4px}
+#otsRankingSection h4{font-size:12px;font-weight:850;color:#234f72;margin:14px 0 7px}
+#otsRankingSection .ots-rank-top{list-style:none;margin:0;padding:0}
+#otsRankingSection .ots-rank-top li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 2px;border-bottom:1px solid #e3ebf2;font-size:11px;color:#385b77}
+#otsRankingSection .ots-rank-top li strong{font-weight:850;color:#174a72;white-space:nowrap}
+#otsRankingSection .ots-rank-source{margin:8px 0 0;font-size:10px;color:#71879a;overflow-wrap:anywhere}
+#otsRankingSection .ots-rank-note{margin:11px 0 0;padding:9px 10px;border-radius:8px;background:#f6f9fb;color:#657e92;line-height:1.5;font-size:10px}
+#otsRankingSection .ots-rank-file-label{display:block;font-size:11px;font-weight:850;color:#285474;margin-bottom:7px}
+#otsRankingSection input[type=file]{display:block;width:100%;background:#fff;border:1px dashed #aabfd9;border-radius:9px;color:#3e607a;font-size:11px;padding:11px;margin-bottom:12px;cursor:pointer}
+#otsRankingSection .ots-rank-date-label{display:block;font-weight:700;font-size:10px;color:#56718a;margin-bottom:5px}
+#otsRankingSection input[type=date],#otsRankingSection input[type=text],#otsRankingSection input[type=password]{width:100%;min-width:0;min-height:36px;border:1px solid #cfdeeb;border-radius:8px;background:#fff;color:#234968;font-size:12px;padding:8px}
+#otsRankingSection .ots-rank-credentials{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:13px 0}
+#otsRankingSection .ots-rank-credentials label{font-size:10px;font-weight:700;color:#59718b}
+#otsRankingSection .ots-rank-credentials input{margin-top:5px}
+#otsRankingSection #otsRankPublish{width:100%;border:0;border-radius:9px;background:#245e91;color:white;padding:11px;font-size:12px;font-weight:850;cursor:pointer}
+#otsRankingSection #otsRankPublish:disabled{background:#a9bac9;cursor:not-allowed}
+#otsRankingSection .ots-rank-message{min-height:32px;margin-top:11px;background:#ebf8f1;border:1px solid #c9ebd6;border-radius:9px;padding:10px;color:#26684b;font-size:11px;line-height:1.5;overflow-wrap:anywhere}
+#otsRankingSection .ots-rank-message.bad{background:#fff1f1;border-color:#f3c7c7;color:#ad2939}
+@media(max-width:800px){#otsRankingSection{grid-template-columns:1fr}}
+@media(max-width:430px){#otsRankingSection .ots-rank-overview{align-items:flex-start}#otsRankingSection .ots-rank-credentials{grid-template-columns:1fr}#otsRankingSection>.ots-rank-card,#otsRankingSection>.ots-rank-upload{padding:13px}#otsRankingSection .ots-rank-position{font-size:23px}}
+@media print{#otsRankingSection .ots-rank-upload{display:none}#otsRankingSection{grid-template-columns:1fr;break-inside:avoid}}
