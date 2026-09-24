@@ -13,6 +13,7 @@
     '<section class="ots-auto-dialog" role="dialog" aria-modal="true" aria-labelledby="otsAutoTitle">',
       '<header class="ots-auto-head"><div><h2 id="otsAutoTitle">Update Dashboard</h2><p>Authorized OTS login · 7 reports · live recalculation</p></div><button id="otsAutoClose" type="button" aria-label="Close update window">×</button></header>',
       '<div class="ots-auto-local"><span class="ots-auto-dot" aria-hidden="true"></span><span>Your credentials stay in the local Mac/Windows helper; this website cannot read them.</span></div>',
+      '<div class="ots-auto-refresh-state" id="otsAutoRefreshState" role="status" aria-live="polite"></div>',
       '<iframe id="otsAutoLocalFrame" title="Local OTS automation login and live progress" loading="lazy" referrerpolicy="no-referrer" src="about:blank"></iframe>',
       '<div class="ots-auto-foot"><p>One-time setup on your computer: <code>npm run setup</code>. Each working session: <code>npm run bridge</code> in the repository’s <code>automation</code> folder. Complete any portal CAPTCHA/OTP in the official browser window. If the embedded helper is blocked, use the link below.</p><a href="'+LOCAL+'" target="_blank" rel="noopener noreferrer">Open local helper ↗</a></div>',
     '</section>'
@@ -30,6 +31,20 @@
   if(frame.src!==LOCAL)frame.src=LOCAL;
   overlay.querySelector('#otsAutoClose').focus();
  }
+ window.addEventListener('message',async e=>{
+  if(e.origin!=='http://127.0.0.1:8765'||e.data?.kind!=='ots-dashboard-updated')return;
+  const indicator=document.getElementById('otsAutoRefreshState');
+  if(indicator)indicator.textContent='Published. Syncing the refreshed dashboard and ranking…';
+  try {
+   const tasks=[];
+   if(typeof window.__reloadSharedLive==='function')tasks.push(window.__reloadSharedLive());
+   if(typeof window.__otsRankingRefresh==='function')tasks.push(window.__otsRankingRefresh());
+   if(tasks.length)await Promise.all(tasks);
+   if(indicator)indicator.textContent='Latest published reports have been loaded into this page.';
+  }catch(err){
+   if(indicator)indicator.textContent='Published. Please refresh this page to see the latest data.';
+  }
+ });
  function mount(){
   const bar=document.querySelector('.top .actions');
   if(!bar||document.getElementById('otsAutoUpdateButton'))return;
