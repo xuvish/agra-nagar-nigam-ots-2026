@@ -18,7 +18,7 @@ const ROOT = path.join(os.homedir(), '.agra-ots-automation');
 const CONFIG = path.join(ROOT, 'selectors.json');
 const PORTAL = 'https://www.upulbots.in/Login.aspx';
 const ORIGIN = new URL(PORTAL).origin;
-const DASHBOARD = 'https://xuvish.github.io/agra-nagar-nigam-ots-2026/';
+const DASHBOARD = 'https://xuvish.github.io/agra-nagar-nigam-ots-2026/ots/';
 const REPORTS = [
   {key: 'apps', label: 'Applications'},
   {key: 'zone', label: 'Zone/Ward Application Summary'},
@@ -173,15 +173,6 @@ async function uploadToDashboard(context, rl, files, rankingFile = null) {
     const msg = document.querySelector('#uploadMsg')?.textContent || '';
     return input?.files?.length === 7 && /7 reports identified by CONTENT/i.test(msg);
   }, null, {timeout: 120000});
-  if (rankingFile) {
-    await page.locator('#otsRankingFile').setInputFiles(rankingFile);
-    let rankingDate = (await rl.question('Enter 8th statewide ranking report AS-OF date (YYYY-MM-DD): ')).trim();
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(rankingDate) ||
-        Number.isNaN(new Date(rankingDate + 'T00:00:00').getTime())) {
-      throw new Error('Valid ranking report date is required; no upload submitted.');
-    }
-    await page.locator('#otsRankingDate').fill(rankingDate);
-  }
   await page.locator('#reportModal .btn.primary').click();
   try {
     await page.waitForFunction(() => {
@@ -197,6 +188,29 @@ async function uploadToDashboard(context, rl, files, rankingFile = null) {
     throw new Error('Dashboard did not confirm LIVE publish: ' + message);
   }
   console.log('\nSUCCESS: ' + message.trim());
+  if (rankingFile) {
+    console.log('Seven-report publication confirmed. Uploading optional eighth ranking separately.');
+    const date = (await rl.question('Enter ranking report AS-OF date YYYY-MM-DD, or leave blank if unknown: ')).trim();
+    if (date && (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date))))
+      throw Error('Seven main reports were published, but optional ranking date is invalid.');
+    await page.locator('#otsRankOpenUpload').click();
+    await page.locator('#otsRankFile').setInputFiles(rankingFile);
+    if (date) await page.locator('#otsRankSourceDate').fill(date);
+    await page.waitForFunction(() => {
+      const btn = document.querySelector('#otsRankPublish');
+      const msg = document.querySelector('#otsRankMessage')?.textContent || '';
+      return (btn && !btn.disabled) || /invalid|not found|duplicate|error|failed/i.test(msg);
+    }, null, {timeout:120000});
+    if (await page.locator('#otsRankPublish').isDisabled())
+      throw Error('Seven main reports published; ranking validation failed: '+await page.locator('#otsRankMessage').textContent());
+    await page.locator('#otsRankPublish').click();
+    await page.waitForFunction(() => /ranking published for all website visitors|publish failed|invalid administrator|duplicate/i.test(
+      document.querySelector('#otsRankMessage')?.textContent || ''), null, {timeout:90000});
+    const rankingMessage = await page.locator('#otsRankMessage').textContent() || '';
+    if (!/ranking published for all website visitors/i.test(rankingMessage))
+      throw Error('Seven main reports published; ranking publish failed: ' + rankingMessage);
+    console.log('RANKING SUCCESS: ' + rankingMessage.trim());
+  }
   console.log('Dashboard: ' + DASHBOARD);
   return page;
 }
