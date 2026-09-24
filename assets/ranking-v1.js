@@ -92,7 +92,7 @@ function install(){
  if(!box||typeof process!=='function'||typeof builder!=='function')return;
  const div=document.createElement('div');div.className='ots-rank-upload';
  div.innerHTML='<b>8th Report · UP 75 ULB Ranking</b><p>Select the DHQ statewide summary separately from the original seven Excel files.</p><input id="otsRankingFile" type="file" accept=".xls,.xlsx,.csv"><label for="otsRankingDate">Statewide report as-of date (confirm from portal)</label><input id="otsRankingDate" type="date"><small id="otsRankingStatus">Optional: the seven-report workflow still works on its own.</small>';
- box.querySelector('.drop')?.insertAdjacentElement('afterend',div);
+ const drop=box.querySelector('.drop');if(drop){const grid=document.createElement('div');grid.className='ots-report-upload-grid';drop.before(grid);grid.append(drop,div)}
  let pending=null;
  window.__buildSharedPayload=function(){const p=builder.apply(this,arguments);if(pending)p.ranking=pending;else if(shared())p.ranking=shared();return p};
  const wrapped=async function(){
