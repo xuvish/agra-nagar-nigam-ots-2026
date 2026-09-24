@@ -268,6 +268,7 @@
     window.addEventListener('load', ensureMount);
     retrieve();
   }
+  window.__otsRankingRefresh=retrieve;
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});
   else start();
 })();
