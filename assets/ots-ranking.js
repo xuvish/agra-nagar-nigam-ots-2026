@@ -198,10 +198,20 @@
     controls.publish.addEventListener('click',publish);
     paint(current);
   }
-  function start() {
+  let observedHost = null;
+  function ensureMount() {
     mount();
     const host=document.querySelector('#productionDashboard');
-    if(host) new MutationObserver(mount).observe(host,{childList:true});
+    if(host && host!==observedHost) {
+      observedHost=host;
+      new MutationObserver(mount).observe(host,{childList:true});
+    }
+  }
+  function start() {
+    ensureMount();
+    document.addEventListener('ots:bootstrap-ready', ensureMount);
+    document.addEventListener('ots:shared-ready', ensureMount);
+    window.addEventListener('load', ensureMount);
     retrieve();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});
