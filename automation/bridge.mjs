@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
  * Local-only OTS bridge. Run on the operator's own Mac/Windows desktop.
- * Credentials are accepted by http://127.0.0.1:8765/control only, held in memory,
- * used with the visible official browser, and never uploaded to GitHub/Supabase.
+ * Credentials are entered on the localhost control page. The OTS password is used
+ * only locally on the official portal; separate dashboard admin credentials are
+ * used by the existing dashboard's authorized login/publish endpoint.
  * This is NOT a hosted credential relay or a CAPTCHA/OTP bypass.
  */
 import http from 'node:http';
