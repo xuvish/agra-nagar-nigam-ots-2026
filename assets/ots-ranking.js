@@ -20,20 +20,21 @@
       : {day:'2-digit',month:'short',year:'numeric',hour:'numeric',minute:'2-digit'});
   }
   function putText(id, value) {
-    const el = root && root.querySelector('#' + id);
+    const el = document.getElementById(id);
     if (el) el.textContent = value;
   }
   function paint(r) {
     current = r;
     if (!root) return;
     const exists = !!r && Number.isInteger(Number(r.rank));
-    putText('otsRankPosition', exists ? '#' + r.rank + ' / ' + r.count : 'Awaiting ranking report');
+    putText('otsRankPosition', exists ? '#' + r.rank + ' / ' + r.count : '— / —');
+    putText('otsRankFullPosition', exists ? '#' + r.rank + ' / ' + r.count : 'Awaiting ranking report');
     putText('otsRankAmount', exists ? money(r.amount) + ' · Received amount' : 'Upload the 75-ULB Excel report to calculate Agra’s position.');
     putText('otsRankSource', exists ? 'Source: ' + (r.source_name || 'Ranking Excel') : 'Ranking source not yet uploaded');
     putText('otsRankDate', exists ? 'Report date: ' + dateLabel(r.source_date) + ' · Uploaded: ' + dateLabel(r.updated_at) : 'No ranking snapshot published');
     putText('otsRankGap', exists ? (r.gap_to_next == null ? 'Already at highest collection rank' : money(r.gap_to_next) + ' gap to next higher amount') : '—');
     putText('otsRankBuffer', exists ? (r.buffer_to_lower == null ? 'No lower amount in the report' : money(r.buffer_to_lower) + ' ahead of next lower ULB') : '—');
-    const delta = root.querySelector('#otsRankDelta');
+    const delta = document.getElementById('otsRankDelta');
     if (delta) {
       delta.className = 'ots-rank-delta';
       if (!exists || r.delta == null) delta.textContent = '— First ranking snapshot';
@@ -41,7 +42,8 @@
       else if (r.delta < 0) { delta.classList.add('down'); delta.textContent = '▼ Down ' + Math.abs(r.delta) + ' since previous upload'; }
       else { delta.classList.add('flat'); delta.textContent = '● Rank unchanged'; }
     }
-    const list = root.querySelector('#otsRankTop5');
+    putText('otsRankLeader', exists && r.top5?.length ? '#1 ' + r.top5[0].name : 'Tap for ranking details');
+    const list = document.getElementById('otsRankTop5');
     if (list) {
       list.replaceChildren();
       if (!exists) {
@@ -158,45 +160,97 @@
     finally{busy=false}
   }
 
+
+  // Modals live outside the dashboard render target, so data refreshes do not close them.
+  function makeModal(id, html) {
+    let overlay=document.getElementById(id);
+    if(overlay)return overlay;
+    overlay=document.createElement('div');
+    overlay.id=id;
+    overlay.className='ots-rank-overlay';
+    overlay.hidden=true;
+    overlay.innerHTML=html;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click',e=>{if(e.target===overlay)closeModal(overlay)});
+    overlay.querySelectorAll('[data-rank-close]').forEach(b=>b.addEventListener('click',()=>closeModal(overlay)));
+    return overlay;
+  }
+  let lastTrigger=null;
+  function openModal(overlay,trigger) {
+    lastTrigger=trigger || document.activeElement;
+    overlay.hidden=false;
+    const focus=overlay.querySelector('input,button');
+    if(focus)focus.focus();
+  }
+  function closeModal(overlay) {
+    overlay.hidden=true;
+    if(lastTrigger && lastTrigger.isConnected)lastTrigger.focus();
+  }
+  function ensureModals() {
+    const details=makeModal('otsRankDetailsModal',[
+      '<div class="ots-rank-dialog" role="dialog" aria-modal="true" aria-labelledby="otsRankDetailTitle">',
+       '<header class="ots-rank-dialog-head"><div><h2 id="otsRankDetailTitle">UP OTS Ranking · Agra</h2><p>Separate statewide ranking report</p></div><button type="button" data-rank-close aria-label="Close ranking details">×</button></header>',
+       '<div class="ots-rank-details"><div class="ots-rank-full-number" id="otsRankFullPosition">—</div><p id="otsRankAmount">Upload the report for ranking.</p>',
+        '<div class="ots-rank-gaps"><div><small>Gap to next higher ULB</small><strong id="otsRankGap">—</strong></div><div><small>Buffer to next lower ULB</small><strong id="otsRankBuffer">—</strong></div></div>',
+        '<h3>Top 5 ULBs · Received amount</h3><ol id="otsRankTop5" class="ots-rank-top"></ol>',
+        '<p id="otsRankSource" class="ots-rank-source">No report uploaded</p><p id="otsRankDate" class="ots-rank-source">—</p>',
+        '<p class="ots-rank-note">Rank movement compares this upload with the preceding upload. It does not change your OTS collection or application calculations.</p>',
+       '</div>',
+      '</div>'
+    ].join(''));
+    const upload=makeModal('otsRankUploadModal',[
+      '<div class="ots-rank-dialog" role="dialog" aria-modal="true" aria-labelledby="otsRankUploadTitle">',
+       '<header class="ots-rank-dialog-head"><div><h2 id="otsRankUploadTitle">Upload Ranking Report</h2><p>Independent Excel upload · 7 OTS reports unchanged</p></div><button type="button" data-rank-close aria-label="Close ranking upload">×</button></header>',
+       '<div class="ots-rank-form">',
+        '<label for="otsRankFile">Ranking Excel (.xls / .xlsx / .csv)</label><input id="otsRankFile" type="file" accept=".xls,.xlsx,.csv" />',
+        '<label for="otsRankSourceDate">Source report date (optional)</label><input id="otsRankSourceDate" type="date" />',
+        '<div class="ots-rank-credentials"><label>Dashboard admin username<input id="otsRankAdminUser" autocomplete="username" type="text" /></label><label>Dashboard admin password<input id="otsRankAdminPassword" autocomplete="current-password" type="password" /></label></div>',
+        '<button type="button" id="otsRankPublish" disabled>Upload Ranking Sheet</button>',
+        '<div class="ots-rank-message" id="otsRankMessage" aria-live="polite">Select an Excel report. This does not affect Manage Reports or its calculations.</div>',
+       '</div>',
+      '</div>'
+    ].join(''));
+    if(!controls.file) {
+      controls.file=upload.querySelector('#otsRankFile');
+      controls.date=upload.querySelector('#otsRankSourceDate');
+      controls.user=upload.querySelector('#otsRankAdminUser');
+      controls.password=upload.querySelector('#otsRankAdminPassword');
+      controls.publish=upload.querySelector('#otsRankPublish');
+      controls.message=upload.querySelector('#otsRankMessage');
+      controls.file.addEventListener('change',previewFile);
+      controls.publish.addEventListener('click',publish);
+      document.addEventListener('keydown',e=>{
+        if(e.key!=='Escape')return;
+        if(!upload.hidden){e.preventDefault();closeModal(upload);}
+        else if(!details.hidden){e.preventDefault();closeModal(details);}
+      });
+    }
+    return {details,upload};
+  }
   function mount() {
     const host=document.querySelector('#productionDashboard');
-    if(!host) return;
-    if(root && root.isConnected) return;
+    if(!host)return;
+    const kpis=host.querySelector('.prod-kpis');
+    if(!kpis)return;
+    if(root && root.isConnected && root.parentElement===kpis)return;
+    const modals=ensureModals();
     root=document.createElement('section');
     root.id='otsRankingSection';
     root.className='ots-ranking-module';
-    root.setAttribute('aria-label','Independent Uttar Pradesh OTS ranking');
-    root.innerHTML=String.raw`<div class="ots-rank-card">
-       <div class="ots-rank-head"><span class="ots-rank-icon">🏆</span><div><h3>UP OTS Ranking · Agra</h3><small>Received amount ranking · uploaded ULB report</small></div></div>
-       <div class="ots-rank-overview"><div id="otsRankPosition" class="ots-rank-position">Awaiting ranking report</div><span id="otsRankDelta" class="ots-rank-delta">— First ranking snapshot</span></div>
-       <div id="otsRankAmount" class="ots-rank-amount">Upload a ranking report to calculate Agra's position.</div>
-       <div class="ots-rank-gaps"><div><small>Gap to next rank</small><strong id="otsRankGap">—</strong></div><div><small>Buffer above next lower ULB</small><strong id="otsRankBuffer">—</strong></div></div>
-       <h4>Top 5 ULBs · received amount</h4><ol id="otsRankTop5" class="ots-rank-top"></ol>
-       <p id="otsRankSource" class="ots-rank-source">Ranking source not yet uploaded</p><p id="otsRankDate" class="ots-rank-source">No ranking snapshot published</p>
-       <p class="ots-rank-note">▲ Higher rank · ▼ lower rank compared with previous uploaded snapshot. Figures reflect the ranking Excel only, not the 7-report OTS collection.</p>
-     </div>
-     <div class="ots-rank-upload">
-       <div class="ots-rank-head"><span class="ots-rank-icon">▤</span><div><h3>Ranking Excel Upload</h3><small>Independent of Manage Reports</small></div></div>
-       <label class="ots-rank-file-label" for="otsRankFile">Choose ranking Excel (.xls / .xlsx / .csv)</label>
-       <input id="otsRankFile" type="file" accept=".xls,.xlsx,.csv" />
-       <label class="ots-rank-date-label" for="otsRankSourceDate">Source report date (optional)</label>
-       <input id="otsRankSourceDate" type="date" />
-       <div class="ots-rank-credentials"><label>Dashboard admin username<input id="otsRankAdminUser" autocomplete="username" type="text" /></label><label>Dashboard admin password<input id="otsRankAdminPassword" autocomplete="current-password" type="password" /></label></div>
-       <button type="button" id="otsRankPublish" disabled>Upload Ranking Sheet</button>
-       <div class="ots-rank-message" id="otsRankMessage" aria-live="polite">Only this ranking module is updated. Seven-report uploader and its calculations remain untouched.</div>
-     </div>`;
-    const anchor=host.querySelector('.prod-kpis');
-    if(anchor) anchor.insertAdjacentElement('afterend',root);
-    else host.insertBefore(root,host.firstChild);
-    controls.file=root.querySelector('#otsRankFile');
-    controls.date=root.querySelector('#otsRankSourceDate');
-    controls.user=root.querySelector('#otsRankAdminUser');
-    controls.password=root.querySelector('#otsRankAdminPassword');
-    controls.publish=root.querySelector('#otsRankPublish');
-    controls.message=root.querySelector('#otsRankMessage');
-    controls.file.addEventListener('change',previewFile);
-    controls.publish.addEventListener('click',publish);
+    root.setAttribute('aria-label','Agra ULB ranking widget');
+    root.innerHTML=[
+      '<div class="ots-rank-tile">',
+       '<div class="ots-rank-mini-head"><span>🏆 UP OTS Ranking</span><button type="button" id="otsRankOpenUpload">Upload Report ↗</button></div>',
+       '<div class="ots-rank-upper"><strong id="otsRankPosition">—</strong><span class="ots-rank-delta" id="otsRankDelta">First snapshot</span></div>',
+       '<div class="ots-rank-divider" aria-hidden="true"></div>',
+       '<button type="button" id="otsRankOpenDetails" class="ots-rank-lower"><span><b>Top 5 ULBs</b><small id="otsRankLeader">Tap for ranking details</small></span><strong>View all ›</strong></button>',
+      '</div>'
+    ].join('');
+    kpis.insertBefore(root,kpis.children[3]||null);
+    root.querySelector('#otsRankOpenUpload').onclick=e=>openModal(modals.upload,e.currentTarget);
+    root.querySelector('#otsRankOpenDetails').onclick=e=>openModal(modals.details,e.currentTarget);
     paint(current);
+    putText('otsRankFullPosition',current&&Number.isInteger(Number(current.rank))?'#'+current.rank+' / '+current.count:'Awaiting ranking report');
   }
   let observedHost = null;
   function ensureMount() {
