@@ -96,9 +96,9 @@ async function detect(file){
   if(/\.pdf$/i.test(file.name)){
     try{
       const report=await window.OTSSevenPdf.convert(file);
-      if(report)return{type:report.type,file:report.file,repaired:true};
+      if(report)return{type:report.type,file:report.file,converted:true};
       const converted=await convertPaymentPdf(file);
-      return{type:paymentKind(converted.rows,0),file:converted.file,repaired:true};
+      return{type:paymentKind(converted.rows,0),file:converted.file,converted:true};
     }
     catch(e){return{type:'unknown',file,error:String(e.message||e)}}
   }
@@ -143,8 +143,8 @@ async function canonicalizeInput(){
       for(const x of found){const nf=new File([x.file],CANON[x.type],{type:x.file.type,lastModified:x.file.lastModified});dt.items.add(nf)}
       input.files=dt.files;input.dataset.smartReady='1';input.dispatchEvent(new Event('change',{bubbles:true}));
     }
-    const repaired=found.filter(x=>x.repaired).length;
-    const msg=document.getElementById('uploadMsg');if(msg){msg.className='msg show ok';msg.textContent='7 reports identified by CONTENT — filenames do not matter.'+(repaired?` Auto-repaired ${repaired} corrupted XLSX export(s).`:'')+' Ready to calculate.'}
+    const repaired=found.filter(x=>x.repaired).length,pdfs=found.filter(x=>x.converted).length;
+    const msg=document.getElementById('uploadMsg');if(msg){msg.className='msg show ok';msg.textContent='7 reports identified by CONTENT — filenames do not matter.'+(pdfs?` Read ${pdfs} PDF report(s) directly.`:'')+(repaired?` Auto-repaired ${repaired} damaged XLSX export(s).`:'')+' Ready to calculate.'}
     return true;
   }catch(e){console.error(e);const msg=document.getElementById('uploadMsg');if(msg){msg.className='msg show err';msg.textContent='Spreadsheet repair/read failed: '+e.message}return false}
   finally{input.dataset.smartBusy='0'}
