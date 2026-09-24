@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Local OTS Update</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Arial,"Segoe UI",sans-serif;color:#163c5c;background:#fbfdff;font-size:12px}
+main{padding:16px 19px 18px}.caption{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;font-size:11px;color:#53768e}
+.pill{padding:5px 9px;background:#ebf9f1;border:1px solid #cbe9d5;border-radius:99px;color:#23734e;font-weight:850;white-space:nowrap}
+label{font-weight:800;display:block;color:#355b76;font-size:11px}
+input{display:block;width:100%;min-width:0;background:#fff;border:1px solid #cbddea;border-radius:9px;margin:5px 0 10px;padding:10px 11px;font-size:13px;color:#194367;outline:none}
+input:focus{border-color:#4b99c7;box-shadow:0 0 0 3px rgba(67,144,199,.13)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+hr{height:1px;border:0;background:#dce8f0;margin:7px 0 13px}.subhead{font-size:11px;font-weight:900;color:#195477;margin:0 0 9px}
+button{border:0;border-radius:10px;background:#24669b;color:#fff;padding:11px 14px;font-weight:900;cursor:pointer;font-size:12px}
+button:hover{filter:brightness(1.07)}button:disabled{background:#a8bbca;cursor:wait}
+#begin{width:100%}.help{font-size:10px;color:#607e95;line-height:1.5;margin:7px 0 12px}
+.progressCard{margin-top:12px;padding:13px;background:linear-gradient(145deg,#f0f9ff,#f6fdf8);border:1px solid #cfe3ef;border-radius:13px;box-shadow:inset 0 1px 0 #fff}
+.statusHead{display:flex;justify-content:space-between;gap:8px;align-items:center}.statusHead strong{font-size:13px;color:#154a72}
+.indicator{display:inline-block;width:9px;height:9px;border-radius:50%;background:#7d9ab0;margin-right:5px;vertical-align:middle}
+.progressCard.working .indicator{background:#2ab681;box-shadow:0 0 0 4px rgba(42,182,129,.12);animation:pulse 1.3s infinite}
+.progressCard.error .indicator{background:#d95358}.progressCard.done .indicator{background:#159e69}
+@keyframes pulse{50%{opacity:.4}}
+#barTrack{height:9px;background:#dcebf5;border-radius:99px;overflow:hidden;margin:12px 0}
+#barFill{height:100%;width:0;background:linear-gradient(90deg,#2384c1,#4cbdb0);transition:width .3s;box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
+#detail{margin:0;font-size:11px;line-height:1.5;color:#4b708b;overflow-wrap:anywhere}
+#continue{display:none;width:100%;margin-top:10px;background:#118265}
+.progressCard.waiting #continue{display:block}
+#result{margin-top:7px;font-size:11px;line-height:1.5;color:#486d87}
+#result.bad{color:#b02939}
+@media(max-width:510px){main{padding:12px}.grid{grid-template-columns:1fr}.caption{align-items:flex-start;flex-direction:column}}
+</style></head>
+<body><main>
+ <div class="caption"><b>ONE-CLICK REPORT REFRESH</b><span class="pill">Local computer only</span></div>
+ <form id="startForm" autocomplete="off">
+  <p class="subhead">Official OTS portal login</p>
+  <div class="grid">
+   <label>OTS User ID<input id="portalUser" type="text" autocomplete="off" maxlength="128" required placeholder="Enter departmental ID"></label>
+   <label>OTS Password<input id="portalPass" type="password" autocomplete="off" maxlength="512" required placeholder="Password"></label>
+  </div>
+  <p class="subhead">Your dashboard administrator login (separate account)</p>
+  <div class="grid">
+   <label>Dashboard admin ID<input id="dashboardUser" type="text" autocomplete="off" maxlength="128" required placeholder="Dashboard ID"></label>
+   <label>Dashboard admin password<input id="dashboardPass" type="password" autocomplete="off" maxlength="512" required placeholder="Dashboard password"></label>
+  </div>
+  <label>Statewide ranking report date (optional)<input id="rankingDate" type="date"></label>
+  <p class="help">Credentials go only to the helper running on this computer at 127.0.0.1. The official OTS browser opens locally. Complete its CAPTCHA/OTP yourself, then tap Continue. Your recorded export clicks will handle the reports.</p>
+  <button id="begin" type="submit">↻ Start Update Dashboard</button>
+ </form>
+ <section id="progressCard" class="progressCard" role="status" aria-live="polite">
+  <div class="statusHead"><strong><i class="indicator"></i><span id="phase">Ready</span></strong><b id="percent">0%</b></div>
+  <div id="barTrack"><div id="barFill"></div></div>
+  <p id="detail">Waiting for Update Dashboard.</p>
+  <button id="continue" type="button">I have completed official login · Continue →</button>
+  <div id="result"></div>
+ </section>
+</main>
+<script>
+(function(){
+ 'use strict';
+ const $=id=>document.getElementById(id);
+ const form=$('startForm'),card=$('progressCard'),begin=$('begin'),cont=$('continue');
+ let announced=false,busy=false,lastPhase='';
+ function showError(msg){$('result').textContent=msg;$('result').className='bad'}
+ async function call(path,data){
+  const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  const j=await r.json();
+  if(!r.ok||!j.ok)throw Error(j.error||'Local helper request failed');
+  return j;
+ }
+ function paint(j){
+  const phase=j.phase||'idle',work=!['idle','error','done'].includes(phase);
+  card.className='progressCard '+(phase==='awaiting_login'?'waiting':phase==='error'?'error':phase==='done'?'done':work?'working':'');
+  $('phase').textContent=phase==='done'?'Published successfully':phase==='error'?'Attention required':phase==='awaiting_login'?'Finish official login':phase.replace(/_/g,' ').replace(/\b\w/g,s=>s.toUpperCase());
+  const p=Math.max(0,Math.min(100,Number(j.progress)||0));
+  $('percent').textContent=p+'%';$('barFill').style.width=p+'%';
+  $('detail').textContent=j.message||'Waiting for update.';
+  if(phase!==lastPhase){$('result').textContent='';$('result').className='';lastPhase=phase;}
+  if(phase==='done'||phase==='error'){
+   begin.disabled=false;busy=false;
+   if(phase==='done'){
+    $('result').textContent='Open or refresh the live dashboard to see the latest report.';
+    if(!announced){announced=true;window.parent.postMessage({kind:'ots-dashboard-updated'},'https://xuvish.github.io')}
+   }else showError(j.error||j.message||'Update stopped.');
+  }else if(work){begin.disabled=true;busy=true}
+  else {begin.disabled=false;busy=false}
+  if(j.sevenPublished&&phase==='error')$('result').textContent='The seven main reports were published. An optional later step failed: '+(j.error||'Check ranking report.');
+ }
+ async function refresh(){
+  try{const r=await fetch('/status',{cache:'no-store'});if(!r.ok)throw Error('Helper unavailable');paint(await r.json());}
+  catch(e){card.className='progressCard error';$('phase').textContent='Helper disconnected';showError('Start npm run bridge on your Mac/PC. '+e.message);}
+ }
+ form.addEventListener('submit',async e=>{
+  e.preventDefault();if(busy)return;
+  announced=false;begin.disabled=true;
+  $('detail').textContent='Connecting to the local automation helper…';
+  $('phase').textContent='Starting';$('barFill').style.width='1%';
+  try{
+   await call('/start',{
+    portalUsername:$('portalUser').value,portalPassword:$('portalPass').value,
+    dashboardUsername:$('dashboardUser').value,dashboardPassword:$('dashboardPass').value,
+    rankingDate:$('rankingDate').value
+   });
+   $('portalPass').value='';$('dashboardPass').value='';
+   await refresh();
+  }catch(e){begin.disabled=false;busy=false;showError(e.message);}
+ });
+ cont.addEventListener('click',async()=>{
+  cont.disabled=true;
+  try{await call('/continue',{});await refresh()}catch(e){showError(e.message)}
+  finally{cont.disabled=false}
+ });
+ refresh();setInterval(refresh,1350);
+})();
+</script></body></html>
