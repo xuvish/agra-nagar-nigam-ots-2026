@@ -1,12 +1,12 @@
-# OTS 7-report local automation
+# OTS 7 + optional 8th-ranking report automation
 
-This is an **optional local helper** for the existing production dashboard. It does not replace the dashboard, edit its calculation engine, or save government login credentials. It opens a real Chromium window on your own Mac/Windows computer.
+This is an **optional local helper** for the existing production dashboard, with a separate optional statewide ranking export. It does not replace the dashboard, edit its calculation engine, or save government login credentials. It opens a real Chromium window on your own Mac/Windows computer.
 
 ## What it does
 
-- First-time setup: after YOU sign in to `upulbots.in`, record click paths for each of the seven report exports. The click recorder retains CSS selectors and page paths only, never input values, passwords, cookies, OTPs or response bodies.
-- First-time setup also downloads all seven reports and sends them to the existing website through its original **Manage Reports → Submit Reports & Recalculate** flow.
-- Later: after YOU sign in, replay the recorded clicks to download all seven reports, then open the dashboard for your separate dashboard admin login and upload them. It waits for the existing dashboard's explicit live-publication success message.
+- First-time setup: after YOU sign in to `upulbots.in`, record click paths for each of the seven report exports and optionally the eighth statewide DHQ ranking export. The click recorder retains CSS selectors and page paths only, never input values, passwords, cookies, OTPs or response bodies.
+- First-time setup also downloads the reports and sends the seven original reports, plus the optional separate ranking report, to the existing website through its original **Manage Reports → Submit Reports & Recalculate** flow.
+- Later: after YOU sign in, replay the recorded clicks to download the seven original reports and optional eighth ranking report, then open the dashboard for your separate dashboard admin login and upload them. It waits for the existing dashboard's explicit live-publication success message.
 - Temporary downloaded files are stored only on your computer and removed on normal program exit. Nothing is committed to GitHub.
 
 The website's content-based seven-report identifier, reconciliation, manual mappings and publish code remain authoritative. Do not infer that an Excel download or dashboard upload succeeded merely because a button was clicked.
@@ -52,4 +52,8 @@ The selector plan is at `~/.agra-ots-automation/selectors.json` (Windows: your u
 6. In-Process Report
 7. Approved Application Summary
 
-The existing website identifies report types from **content**, not user filenames. Wrong/duplicate reports should be rejected by its validator.
+The eighth report is optional and recorded in the same local selectors configuration. To add it to an older seven-report setup, rerun `npm run setup` and record all exports. The script asks for the eighth report's as-of date at each import; it does not guess this date. The existing website identifies the seven original report types from **content**, not user filenames. Wrong/duplicate reports should be rejected by its validator.
+
+## Eighth report integration
+
+The new dashboard ranking panel uses the separate 75-ULB DHQ dataset to show Agra's received-amount rank, Top Five leaderboard, immediate higher/lower collection gaps, and directional arrows only when two dated statewide snapshots exist. Original seven input files, calculations and original local private data handling are unchanged. If the optional eighth export is absent, the previous ranking remains available and is explicitly labelled as a historical reference until a dated DHQ report is supplied.
