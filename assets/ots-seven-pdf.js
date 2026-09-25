@@ -15,7 +15,7 @@ const sort=(a,b)=>a.y-b.y||a.x-b.x;
 function field(c,n){return (c[n]||[]).slice().sort(sort).map(x=>x.value).join('').replace(/\s+/g,'')}
 function words(c,n){return (c[n]||[]).slice().sort(sort).map(x=>x.value).join(' ').replace(/\s+/g,' ').trim()}
 function status(c,n){const s=field(c,n).toLowerCase();return s.includes('approv')?'Approved':s.includes('reject')?'Rejected':s.includes('progress')?'In Progress':words(c,n)}
-function collectionDate(c,n){const s=words(c,n),m=s.match(/(\d{1,2})\s*([A-Za-z]{3})\s*(\d{4})/);if(!m)throw Error('A collection payment date is unreadable: '+s);return [m[1],m[2],m[3]].join(' ')}
+function collectionDate(c,n){const s=words(c,n),m=s.match(/(\d{1,2})\s*([A-Za-z]{3})\s*(\d{4})/);if(!m)throw Error('A collection payment date is unreadable: '+s);const mon={jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'}[m[2].toLowerCase()];if(!mon)throw Error('A collection payment month is unreadable: '+s);return `${m[3]}-${mon}-${m[1].padStart(2,'0')}`}
 function amount(c,n){const raw=(c[n]||[]).map(x=>x.value).find(x=>/^[-+]?\d[\d,]*(?:\.\d+)?$/.test(x));const v=Number(String(raw??'').replace(/,/g,''));if(raw===undefined||!Number.isFinite(v))throw Error('A numeric PDF table cell could not be read (row '+field(c,0)+'; column '+n+').');return v}
 function column(edges,x){const i=edges.findIndex(edge=>x<edge);return i<0?edges.length:i}
 function parsePages(pages,spec){
