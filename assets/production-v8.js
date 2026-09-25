@@ -46,7 +46,7 @@ function nextSchedule(){const times=[[9,0],[14,0],[17,30],[21,0]],now=new Date()
 function svgSearch(){return'<svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="6.4" stroke-width="1.8"></circle><path d="M16 16l4.2 4.2" stroke-width="1.8" stroke-linecap="round"></path></svg>'}
 function svgCal(){return'<svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="5" width="17" height="15" rx="2.2" stroke-width="1.6"></rect><path d="M7.5 3.5V7M16.5 3.5V7M3.8 9h16.4" stroke-width="1.6" stroke-linecap="round"></path></svg>'}
 function stageLabel(s){return s==='With Applicant'?'With Applicant':s}
-function stageStats(z='All'){const p=payload(),src=z==='All'?(p.workflowCity||{}):(p.stageByZone?.[z]||{}),c=control(z),vals={CTO:N(src.CTO),RI:N(src.RI),TS:N(src.TS),'With Applicant':N(src['With Applicant']),Other:N(src.Other)};const sum=Object.values(vals).reduce((a,b)=>a+b,0),gap=Math.max(0,N(c.inProcess)-sum);return{...vals,gap,total:N(c.inProcess)}}
+function stageStats(z='All'){const p=payload(),src=z==='All'?(p.workflowCity||{}):(p.stageByZone?.[z]||{}),vals={CTO:N(src.CTO),RI:N(src.RI),TS:N(src.TS),'With Applicant':N(src['With Applicant']),Other:N(src.Other)};const total=Object.values(vals).reduce((a,b)=>a+b,0);return{...vals,gap:0,total,sourceTotal:N(control(z).inProcess)}}
 function ensure(){
  document.querySelectorAll('.toolbar,.nav,.panel,#kpis,#asof,#zone,#reportScheduleStrip').forEach(x=>x.style.setProperty('display','none','important'));
  const top=document.querySelector('.top');
@@ -295,13 +295,17 @@ function reportFileBase(report,scope=''){
  return safeReportName(report+(scope?' - '+scope:'')+' - '+date)
 }
 function pendingResponsibilityRows(){
- return ZONES.map(z=>{const s=stageStats(z);return[z,s['With Applicant'],s.CTO,s.RI,s.TS,s.Other+(s.gap||0),s.total]})
+ const rows=ZONES.map(z=>{const s=stageStats(z);return[z,s['With Applicant'],s.CTO,s.RI,s.TS,s.Other,s.total]});
+ const u=payload().workflowUnallocated||{},v=['With Applicant','CTO','RI','TS','Other'].map(k=>N(u[k]));
+ const total=v.reduce((a,b)=>a+b,0);if(total)rows.push(['Zone verification needed',...v,total]);
+ return rows;
 }
 function pendingResponsibilityTableHTML(){
  const rows=pendingResponsibilityRows(),city=stageStats('All');
- return '<table class="compact"><thead><tr><th>Zone</th><th>With Applicant</th><th>CTO</th><th>RI</th><th>TS</th><th>Other / Unallocated</th><th>Total In Process</th></tr></thead><tbody>'+
+ return '<table class="compact"><thead><tr><th>Zone</th><th>With Applicant</th><th>CTO</th><th>RI</th><th>TS</th><th>Other stage</th><th>Total In Process</th></tr></thead><tbody>'+
  rows.map(r=>'<tr><td>'+esc(r[0])+'</td>'+r.slice(1).map(v=>'<td class="center">'+number(v)+'</td>').join('')+'</tr>').join('')+
- '</tbody><tfoot><tr class="total-row"><td>TOTAL</td><td class="center">'+number(city['With Applicant'])+'</td><td class="center">'+number(city.CTO)+'</td><td class="center">'+number(city.RI)+'</td><td class="center">'+number(city.TS)+'</td><td class="center">'+number(city.Other+(city.gap||0))+'</td><td class="center">'+number(city.total)+'</td></tr></tfoot></table>'
+ '</tbody><tfoot><tr class="total-row"><td>TOTAL</td><td class="center">'+number(city['With Applicant'])+'</td><td class="center">'+number(city.CTO)+'</td><td class="center">'+number(city.RI)+'</td><td class="center">'+number(city.TS)+'</td><td class="center">'+number(city.Other)+'</td><td class="center">'+number(city.total)+'</td></tr></tfoot></table>'+
+ (city.total!==city.sourceTotal?'<p>Source difference: detailed in-process '+number(city.total)+'; zone/ward summary '+number(city.sourceTotal)+'. Counts have not been forced to match.</p>':'')
 }
 function exportPendingResponsibilityPrint(){
  const snap=fmtDate(payload().snapshot),title=reportFileBase('Pending Responsibility');
@@ -316,8 +320,9 @@ async function downloadPendingResponsibilityPDF(button){
   doc.setFont('helvetica','bold');doc.setTextColor(18,47,69);doc.setFontSize(17);doc.text('PENDING RESPONSIBILITY',148.5,14,{align:'center'});
   doc.setFont('helvetica','normal');doc.setTextColor(75,85,94);doc.setFontSize(9);doc.text('Zone-wise OTS Workflow Pendency · '+snap,148.5,20,{align:'center'});
   const city=stageStats('All'),body=pendingResponsibilityRows().map(r=>[r[0],...r.slice(1).map(v=>String(v))]);
-  body.push(['TOTAL',String(city['With Applicant']),String(city.CTO),String(city.RI),String(city.TS),String(city.Other+(city.gap||0)),String(city.total)]);
-  doc.autoTable({startY:25,head:[['Zone','With Applicant','CTO','RI','TS','Other / Unallocated','Total In Process']],body,theme:'grid',styles:{fontSize:10,cellPadding:3,textColor:[20,24,28],lineColor:[170,184,195],lineWidth:.25,halign:'center'},headStyles:{fillColor:[229,237,246],textColor:[38,55,70],fontStyle:'bold'},didParseCell:d=>{if(d.row.index===body.length-1){d.cell.styles.fillColor=[220,232,243];d.cell.styles.fontStyle='bold'}}});
+  body.push(['TOTAL',String(city['With Applicant']),String(city.CTO),String(city.RI),String(city.TS),String(city.Other),String(city.total)]);
+  doc.autoTable({startY:25,head:[['Zone','With Applicant','CTO','RI','TS','Other stage','Total In Process']],body,theme:'grid',styles:{fontSize:10,cellPadding:3,textColor:[20,24,28],lineColor:[170,184,195],lineWidth:.25,halign:'center'},headStyles:{fillColor:[229,237,246],textColor:[38,55,70],fontStyle:'bold'},didParseCell:d=>{if(d.row.index===body.length-1){d.cell.styles.fillColor=[220,232,243];d.cell.styles.fontStyle='bold'}}});
+  if(city.total!==city.sourceTotal){doc.setFontSize(9);doc.text('Source difference: detailed in-process '+city.total+'; zone/ward summary '+city.sourceTotal+'. Counts were not forced to match.',14,doc.lastAutoTable.finalY+8)}
   doc.save(reportFileBase('Pending Responsibility')+'.pdf')
  }catch(e){alert('Direct PDF download could not start. Use Print and choose Save as PDF. '+String(e?.message||e))}
  finally{if(button){button.disabled=false;button.textContent=old}}
