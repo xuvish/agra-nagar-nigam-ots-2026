@@ -160,7 +160,7 @@ async function enrichLocal(force=false){
  const byProp=await multiLookup('propertyId',ctx.map(x=>x.pid));const unmatched=[];let matched=0,withMobile=0,totalNumbers=0,byId=0,byHouseCount=0;
  for(const x of ctx){if(!x.pid){unmatched.push(x);continue}const r=pickCandidate(byProp.get(x.pid),x.a,x.zone);if(r){x.match=r;x.basis='Property ID exact';byId++}else unmatched.push(x)}
  const houseKeys=unmatched.filter(x=>x.house).map(x=>x.house),byHouse=await multiLookup('houseNorm',houseKeys);
- for(const x of unmatched){if(x.match||!x.house)continue;const matches=byHouse.get(x.house)||[],r=pickCandidate(matches,x.a,x.zone);if(r){x.match=r;x.basis=matches.length===1?'Unique house number across four masters':'House number + unique owner/zone match';byHouseCount++}}
+ for(const x of unmatched){if(x.match||!x.house)continue;const matches=byHouse.get(x.house)||[],r=pickCandidate(matches,x.a,'');if(r&&(matches.length===1||ownerScore(x.a['Applicant / owner'],r.owner)>=0.6)){x.match=r;x.basis=matches.length===1?'Unique house number across four masters':'House number + unique owner/zone match';byHouseCount++}}
  for(const x of ctx){const r=x.match;if(!r)continue;matched++;const a=x.a,phones=mobileList(r),phoneText=phones.join(' / ');
    a['Property Master match']=x.basis;a['Master property ID']=r.propertyIdRaw||r.propertyId;a['Master owner']=r.owner;a['Master address']=r.address;a['Master popular name']=r.popularName;a['Contact zone']=r.zone;a['Contact ward no']=r.wardNo;a['Contact ward']=r.wardName;a['Contact RI']=r.ri||'';a['Property master due']=r.dueAmount||0;
    a['Allocated zone']=r.zone;a['Allocated ward']=r.wardNo?`${r.wardNo} ${r.wardName}`:r.wardName;a['Allocated RI / TC']=r.ri||a['Allocated RI / TC']||'';a['Allocation basis']=`Property Contact Master · ${x.basis}`;a['Calling zone']=r.zone;a['Calling basis']=`Property Contact Master · ${x.basis}`;
@@ -185,7 +185,7 @@ async function enrichReportPayments(E){
  for(const x of contexts){
   const input={'Applicant / owner':x.a['Applicant / owner']||x.p['Payer name'],'House / property no.':x.p['Receipt property no.']||x.a['House / property no.'],'Allocated zone':x.hint,'Allocated ward':x.a['Allocated ward']};
   let source='Exact master property ID',r=pickCandidate(ids.get(x.pid),input,x.hint);
-  if(!r&&x.house){const all=houses.get(x.house)||[];r=pickCandidate(all,input,x.hint);source=all.length===1?'Unique house across four masters':'House + owner/zone verified';if(r)byHouse++}
+  if(!r&&x.house){const all=houses.get(x.house)||[];r=pickCandidate(all,input,'');if(r&&all.length>1&&ownerScore(input['Applicant / owner'],r.owner)<0.6)r=null;source=all.length===1?'Unique house across four masters':'House + owner/zone verified';if(r)byHouse++}
   if(!r)continue;
   const w=wardByNo(r.zone,r.wardNo);if(!w)continue;
   x.p['Property UID']=x.p['Property UID']||r.propertyIdRaw;x.p['Property zone']=r.zone;x.p['Property ward']=w.wardNo+' '+w.ward;x.p['Property RI']=w.ri;
