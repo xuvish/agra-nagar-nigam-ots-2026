@@ -41,10 +41,11 @@ function applyCurrentChhattaWard(E){
  }
 }
 async function enrichAndSync(E){
- try{const x=window.__applyPropertyContactMaster?.();if(x&&typeof x.then==='function')await x}catch(e){}
+ try{const x=window.__applyPropertyContactMaster?.(true);if(x&&typeof x.then==='function')await x}catch(e){}
  syncPrivate(E);
  try{window.__applyFollowupContactSafety?.()}catch(e){}
  syncPrivate(E);
+ try{await window.__matchPropertyMasterForReports?.(E)}catch(e){console.error('Master receipt matching failed',e)}
  applyCurrentChhattaWard(E);
 }
 window.processReportSet=async function(){
