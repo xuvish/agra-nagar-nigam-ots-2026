@@ -37,12 +37,17 @@ function workflow(E){
  for(const r of E.inprocess||[]){
   const st=stage(r['Pending with']);city[st]++;
   const a=apps.get(appNo(r));let z=a&&zoneOf(a);
-  if(a&&!z){
+  if(a){
    const id=S(a['Property UID']||a['Property ID']||a['Master property ID']).toUpperCase();
    const match=master[id];
    if(match&&ZONES.includes(match[0])){
+    if(match[0]==='Chhatta'&&match.length>=4){
+     a['Allocated zone']='Chhatta';a['Allocated ward']=`${match[1]} ${match[2]}`;
+     a['Allocated RI / TC']=match[3];a['Allocation basis']='Exact Property ID · current 25-ward Chhatta roster';z='Chhatta';
+    }else if(!z){
     const rows=roster.filter(x=>x.zone===match[0]&&Number(x.wardNo)===Number(match[1]));
     if(rows.length<=1){const w=rows[0];a['Allocated zone']=match[0];a['Allocated ward']=w?`${w.wardNo} ${w.ward}`:String(match[1]);a['Allocated RI / TC']=w?.ri||'Officer verification needed';a['Allocation basis']='Exact Property ID · four-zone master tax data';z=match[0]}
+    }
    }
   }
   if(z)byZone[z][st]++;else unallocated[st]++;
