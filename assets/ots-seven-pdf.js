@@ -23,7 +23,22 @@ function parsePages(pages,spec){
  for(let n=0;n<pages.length;n++){
    const items=pages[n].slice().sort(sort);
    const anchors=items.filter(x=>x.x>=spec.anchor.min&&x.x<spec.anchor.max&&spec.anchor.pattern.test(x.value)&&x.y>(n===0?198:15)).sort(sort);
-   if(!anchors.length)throw Error('No report rows on PDF page '+(n+1));
+   if(!anchors.length){
+     // Portal PDF printing sometimes adds an empty trailing page or spills the
+     // final digits of the preceding row's OTS number onto their own page.
+     // Never discard a page with other content: that could silently lose rows.
+     if(!items.length&&last)continue;
+     const identifier=last&&field(last,1);
+     const numericSpill=last&&spec!==SPECS.zone&&spec!==SPECS.collection&&
+       /^OTS\d{0,17}$/i.test(identifier)&&
+       items.length<=8&&items.every(x=>x.x>=70&&x.y<150&&/^\d+$/.test(x.value));
+     if(numericSpill){
+       for(const item of items)last[column(spec.edges,item.x)].push({...item,y:item.y+n*1000});
+       if(!/^OTS\d{18}$/i.test(field(last,1)))throw Error('OTS number remains incomplete after PDF page '+(n+1));
+       continue;
+     }
+     throw Error('No report rows on PDF page '+(n+1)+'; page content needs review.');
+   }
    if(n&&last){const before=anchors[0].y-11;for(const item of items){if(item.y>12&&item.y<before&&item.x>=70)last[column(spec.edges,item.x)].push({...item,y:item.y+n*1000})}}
    let limit=900;
    if(n===pages.length-1){const footer=items.find(x=>x.y>anchors.at(-1).y+8&&x.value.toLowerCase()==='total');if(footer)limit=Math.min(limit,footer.y-2)}
