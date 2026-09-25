@@ -99,7 +99,7 @@ async function load(){
   const r=await fetch(LIVE_URL,{cache:'no-store'});
   if(!r.ok)throw Error('Live snapshot request failed');
   const j=await r.json(),row=j?.snapshot;
-  if(row?.payload&&sourceIsNewer(row.payload,window.SHARED_LIVE)){apply(row.payload,row.updated_at,'live',false);return}
+  if(row?.payload&&!sourceIsNewer(window.SHARED_LIVE,row.payload)){apply(row.payload,row.updated_at,'live',false);return}
  }catch(e){window.__otsSharedState.error=String(e?.message||e)}
  if(window.SHARED_LIVE)return;
  window.SHARED_LIVE=null;window.__otsSharedState={source:'empty',updatedAt:null,error:window.__otsSharedState.error||null,isFinal:false};document.dispatchEvent(new CustomEvent('ots:shared-ready',{detail:window.__otsSharedState}))
