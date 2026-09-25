@@ -157,21 +157,57 @@ async function enrichLocal(force=false){
  const m=meta();if(!m||typeof LOCAL==='undefined'||!LOCAL||!Array.isArray(LOCAL.applications))return null;
  const sig=`${LOCAL.snapshot||''}|${LOCAL.applications.length}|${m.loadedAt}`;if(!force&&window.__propertyMasterEnrichedKey===sig)return window.__propertyMasterLastStats||null;
  const apps=LOCAL.applications,ctx=apps.map((a,i)=>({i,a,pid:normId(a['Property UID']||a['Property ID']||a['Master property ID']),house:normHouse(a['House / property no.']||a['House No.']),zone:currentZoneHint(a)}));
- const byProp=await multiLookup('propertyId',ctx.map(x=>x.pid));const unmatched=[];let matched=0,withMobile=0,totalNumbers=0,byId=0,byHouse=0;
+ const byProp=await multiLookup('propertyId',ctx.map(x=>x.pid));const unmatched=[];let matched=0,withMobile=0,totalNumbers=0,byId=0,byHouseCount=0;
  for(const x of ctx){if(!x.pid){unmatched.push(x);continue}const r=pickCandidate(byProp.get(x.pid),x.a,x.zone);if(r){x.match=r;x.basis='Property ID exact';byId++}else unmatched.push(x)}
- const houseKeys=unmatched.filter(x=>x.house&&x.zone).map(x=>`${x.zone}|${x.house}`),byHouseKey=await multiLookup('houseKey',houseKeys);
- for(const x of unmatched){if(x.match||!x.house||!x.zone)continue;const r=pickCandidate(byHouseKey.get(`${x.zone}|${x.house}`),x.a,x.zone);if(r){x.match=r;x.basis='House No + Calling Zone exact';byHouse++}}
+ const houseKeys=unmatched.filter(x=>x.house).map(x=>x.house),byHouse=await multiLookup('houseNorm',houseKeys);
+ for(const x of unmatched){if(x.match||!x.house)continue;const matches=byHouse.get(x.house)||[],r=pickCandidate(matches,x.a,x.zone);if(r){x.match=r;x.basis=matches.length===1?'Unique house number across four masters':'House number + unique owner/zone match';byHouseCount++}}
  for(const x of ctx){const r=x.match;if(!r)continue;matched++;const a=x.a,phones=mobileList(r),phoneText=phones.join(' / ');
    a['Property Master match']=x.basis;a['Master property ID']=r.propertyIdRaw||r.propertyId;a['Master owner']=r.owner;a['Master address']=r.address;a['Master popular name']=r.popularName;a['Contact zone']=r.zone;a['Contact ward no']=r.wardNo;a['Contact ward']=r.wardName;a['Contact RI']=r.ri||'';a['Property master due']=r.dueAmount||0;
    a['Allocated zone']=r.zone;a['Allocated ward']=r.wardNo?`${r.wardNo} ${r.wardName}`:r.wardName;a['Allocated RI / TC']=r.ri||a['Allocated RI / TC']||'';a['Allocation basis']=`Property Contact Master · ${x.basis}`;a['Calling zone']=r.zone;a['Calling basis']=`Property Contact Master · ${x.basis}`;
    if(phoneText){a['Contact mobile']=phoneText;a['Contact mobiles']=phones;a['Mobile No.']=phoneText;withMobile++;totalNumbers+=phones.length}
    if(!N(a['Applicant / owner'])&&r.owner)a['Applicant / owner']=r.owner;
  }
- window.__propertyMasterEnrichedKey=sig;const st={total:apps.length,matched,withMobile,totalNumbers,byId,byHouse,unmatched:apps.length-matched};window.__propertyMasterLastStats=st;
+ window.__propertyMasterEnrichedKey=sig;const st={total:apps.length,matched,withMobile,totalNumbers,byId,byHouse:byHouseCount,unmatched:apps.length-matched};window.__propertyMasterLastStats=st;
  status(`READY · ${m.properties.toLocaleString('en-IN')} master properties · current OTS: ${matched.toLocaleString('en-IN')} property matches · ${withMobile.toLocaleString('en-IN')} applicants with contact · ${totalNumbers.toLocaleString('en-IN')} numbers available`);
  if(window.renderAll)window.renderAll();return st;
 }
 
+async function enrichReportPayments(E){
+ if(!meta()||!E?.payments?.length)return null;
+ const apps=new Map((E.apps||[]).map(r=>[N(r['Application number']),r]).filter(x=>x[0]));
+ const paid=new Map((E.paidRows||[]).map(r=>[N(r['Application number']),r]).filter(x=>x[0]));
+ const contexts=E.payments.map(p=>{const a=apps.get(N(p['Application number']))||{},pr=paid.get(N(p['Application number']))||{};
+  return {p,a,pr,pid:normId(p['Property UID']||pr['Property UID']||a['Property UID']||a['Master property ID']),house:normHouse(p['House / property no.']||p['Receipt property no.']||pr['House / property no.']||a['House / property no.']),hint:currentZoneHint(a)}});
+ const ids=await multiLookup('propertyId',contexts.map(x=>x.pid)),houses=await multiLookup('houseNorm',contexts.map(x=>x.house));
+ const roster=window.PUBLIC?.roster||[],wardByNo=(zone,no)=>roster.find(r=>r.zone===zone&&Number(r.wardNo)===Number(no));
+ const wardFrom=(zone,raw)=>{const r=roster.filter(r=>r.zone===zone&&(norm(r.ward)===norm(raw)||Number(r.wardNo)===wardNoFrom(raw)));return r.length===1?r[0]:null};
+ let matched=0,byHouse=0;
+ for(const x of contexts){
+  const input={'Applicant / owner':x.a['Applicant / owner']||x.p['Payer name'],'House / property no.':x.p['Receipt property no.']||x.a['House / property no.'],'Allocated zone':x.hint,'Allocated ward':x.a['Allocated ward']};
+  let source='Exact master property ID',r=pickCandidate(ids.get(x.pid),input,x.hint);
+  if(!r&&x.house){const all=houses.get(x.house)||[];r=pickCandidate(all,input,x.hint);source=all.length===1?'Unique house across four masters':'House + owner/zone verified';if(r)byHouse++}
+  if(!r)continue;
+  const w=wardByNo(r.zone,r.wardNo);if(!w)continue;
+  x.p['Property UID']=x.p['Property UID']||r.propertyIdRaw;x.p['Property zone']=r.zone;x.p['Property ward']=w.wardNo+' '+w.ward;x.p['Property RI']=w.ri;
+  x.p['Master match']=source;matched++;
+ }
+ const wm=new Map((E.wardRows||[]).map(w=>[w.zone+'|'+Number(w.wardNo),w]));
+ for(const w of E.wardRows||[]){w.collection=0;w.receipts=0}
+ const unique=new Map();let unmapped=0,unmappedAmount=0;
+ for(const x of contexts){
+  const p=x.p,z=N(p['Property zone']||x.a['Allocated zone']),raw=N(p['Property ward']||x.a['Allocated ward']);
+  const w=wardFrom(z,raw),amount=Number(p['Amount (INR)'])||0;
+  if(!w){unmapped++;unmappedAmount+=amount;continue}
+  const key=w.zone+'|'+Number(w.wardNo);let dst=wm.get(key);
+  if(!dst){dst={zone:w.zone,wardNo:w.wardNo,ward:w.ward,ri:w.ri,post:w.post||'RI',applications:0,approved:0,inProcess:0,rejected:0,applicantPending:0,demand:0,receivedSummary:0,paidApplicants:0,receipts:0,collection:0};wm.set(key,dst);E.wardRows.push(dst)}
+  dst.collection+=amount;dst.receipts++;
+  const n=N(p['Application number']);if(n){if(!unique.has(key))unique.set(key,new Set());unique.get(key).add(n)}
+ }
+ for(const [key,set] of unique)wm.get(key).paidApplicants=set.size;
+ E.masterReceiptAudit={version:1,source:'four locally uploaded property masters',receipts:E.payments.length,masterMatched:matched,masterHouseMatched:byHouse,unmappedReceipts:unmapped,unmappedAmount};
+ return E.masterReceiptAudit
+}
+window.__matchPropertyMasterForReports=enrichReportPayments;
 function ensureFollowupHeader(){const tr=document.querySelector('#followup thead tr');if(tr)tr.innerHTML='<th>Application</th><th>Applicant / Owner</th><th>Mobile</th><th>Property ID</th><th>House No.</th><th>Calling Zone</th><th>Ward</th><th>RI</th><th>Approved On</th><th>Status</th>'}
 function linkPhones(){
  ensureFollowupHeader();
