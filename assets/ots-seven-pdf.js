@@ -65,13 +65,21 @@ async function convert(file){
   const first=await pdf.getPage(1),intro=(await first.getTextContent()).items.map(x=>x.str).join(' ');
   const type=Object.keys(SPECS).find(key=>SPECS[key].title.test(intro));
   if(!type)return null;
-  const spec=SPECS[type],pages=[];
+  const firstText=await first.getTextContent();
+  const shiftedInprocess=type==='inprocess'&&firstText.items.some(t=>/^\d{2}-\d{2}-\d{4}/.test(String(t.str||'').trim())&&t.transform[4]>300&&t.transform[4]<405);
+  // The portal expands the applicant-name column on some exports, shifting
+  // Received On, Pending with whom and the following columns about 100 pt.
+  const spec=shiftedInprocess?{...SPECS.inprocess,edges:[70,95,170,400,450,550,620]}:SPECS[type],pages=[];
   for(let n=1;n<=pdf.numPages;n++){
     const page=n===1?first:await pdf.getPage(n),content=await page.getTextContent(),items=[];
     for(const t of content.items){const value=String(t.str||'').trim();if(value)items.push({value,x:t.transform[4],y:page.view[3]-t.transform[5]})}
     pages.push(items);
   }
   const data=parsePages(pages,spec);if(!data.length)throw Error('No rows found in '+file.name);
+  if(type==='inprocess')for(const row of data){
+    const pending=String(row[3]||'').toLowerCase();
+    if(!/applic|respected|\(cto\)|\(ri\)|\(ts\)|officer|\bit\b/.test(pending))throw Error('Pending with whom is unreadable for '+row[0]+'; check the PDF column layout before calculating.');
+  }
   if(type==='collection')for(const row of data)if(!row[0]||!row[3]||row[1]<=0)throw Error('A collection receipt is incomplete in PDF.');
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([spec.header,...data]),'OTSReport');
   const bytes=XLSX.write(wb,{bookType:'xlsx',type:'array'});
