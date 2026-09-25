@@ -32,8 +32,21 @@ function paymentMetrics(E){
 }
 function workflow(E){
  const city=blank(),byZone=Object.fromEntries(ZONES.map(z=>[z,blank()])),unallocated=blank();
- for(const r of E.inprocess||[]){const st=stage(r['Pending with']);city[st]++}
- for(const a of E.apps||[]){if(approved(a)||rejected(a))continue;const st=stage(a['Pending with']),z=zoneOf(a);if(z)byZone[z][st]++;else unallocated[st]++}
+ const apps=new Map((E.apps||[]).map(a=>[appNo(a),a]).filter(([k])=>k));
+ const roster=window.PUBLIC?.roster||[],master=window.OTS_MASTER_WARDS||{};
+ for(const r of E.inprocess||[]){
+  const st=stage(r['Pending with']);city[st]++;
+  const a=apps.get(appNo(r));let z=a&&zoneOf(a);
+  if(a&&!z){
+   const id=S(a['Property UID']||a['Property ID']||a['Master property ID']).toUpperCase();
+   const match=master[id];
+   if(match&&ZONES.includes(match[0])){
+    const rows=roster.filter(x=>x.zone===match[0]&&Number(x.wardNo)===Number(match[1]));
+    if(rows.length<=1){const w=rows[0];a['Allocated zone']=match[0];a['Allocated ward']=w?`${w.wardNo} ${w.ward}`:String(match[1]);if(w)a['Allocated RI / TC']=w.ri;a['Allocation basis']='Exact Property ID · four-zone master tax data';z=match[0]}
+   }
+  }
+  if(z)byZone[z][st]++;else unallocated[st]++;
+ }
  return{city,byZone,unallocated};
 }
 function bump(m,k,a){if(!k)return;m[k]??={receipts:0,amount:0};m[k].receipts++;m[k].amount+=N(a)}
