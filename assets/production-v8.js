@@ -305,7 +305,7 @@ function pendingResponsibilityTableHTML(){
  return '<table class="compact"><thead><tr><th>Zone</th><th>With Applicant</th><th>CTO</th><th>RI</th><th>TS</th><th>Other stage</th><th>Total In Process</th></tr></thead><tbody>'+
  rows.map(r=>'<tr><td>'+esc(r[0])+'</td>'+r.slice(1).map(v=>'<td class="center">'+number(v)+'</td>').join('')+'</tr>').join('')+
  '</tbody><tfoot><tr class="total-row"><td>TOTAL</td><td class="center">'+number(city['With Applicant'])+'</td><td class="center">'+number(city.CTO)+'</td><td class="center">'+number(city.RI)+'</td><td class="center">'+number(city.TS)+'</td><td class="center">'+number(city.Other)+'</td><td class="center">'+number(city.total)+'</td></tr></tfoot></table>'+
- (city.total!==city.sourceTotal?'<p>Source difference: detailed in-process '+number(city.total)+'; zone/ward summary '+number(city.sourceTotal)+'. Counts have not been forced to match.</p>':'')
+ (city.total!==city.sourceTotal||ZONES.reduce((n,z)=>n+N(control(z).inProcess),0)!==city.total?'<p>Source difference: detailed pending '+number(city.total)+'; received-applications status '+number(city.sourceTotal)+'; zone/ward summary '+number(ZONES.reduce((n,z)=>n+N(control(z).inProcess),0))+'. Counts have not been forced to match.</p>':'')
 }
 function exportPendingResponsibilityPrint(){
  const snap=fmtDate(payload().snapshot),title=reportFileBase('Pending Responsibility');
@@ -322,7 +322,8 @@ async function downloadPendingResponsibilityPDF(button){
   const city=stageStats('All'),body=pendingResponsibilityRows().map(r=>[r[0],...r.slice(1).map(v=>String(v))]);
   body.push(['TOTAL',String(city['With Applicant']),String(city.CTO),String(city.RI),String(city.TS),String(city.Other),String(city.total)]);
   doc.autoTable({startY:25,head:[['Zone','With Applicant','CTO','RI','TS','Other stage','Total In Process']],body,theme:'grid',styles:{fontSize:10,cellPadding:3,textColor:[20,24,28],lineColor:[170,184,195],lineWidth:.25,halign:'center'},headStyles:{fillColor:[229,237,246],textColor:[38,55,70],fontStyle:'bold'},didParseCell:d=>{if(d.row.index===body.length-1){d.cell.styles.fillColor=[220,232,243];d.cell.styles.fontStyle='bold'}}});
-  if(city.total!==city.sourceTotal){doc.setFontSize(9);doc.text('Source difference: detailed in-process '+city.total+'; zone/ward summary '+city.sourceTotal+'. Counts were not forced to match.',14,doc.lastAutoTable.finalY+8)}
+  const zoneTotal=ZONES.reduce((n,z)=>n+N(control(z).inProcess),0);
+  if(city.total!==city.sourceTotal||city.total!==zoneTotal){doc.setFontSize(9);doc.text('Source difference: detailed pending '+city.total+'; received-applications status '+city.sourceTotal+'; zone/ward summary '+zoneTotal+'. Counts were not forced to match.',14,doc.lastAutoTable.finalY+8)}
   doc.save(reportFileBase('Pending Responsibility')+'.pdf')
  }catch(e){alert('Direct PDF download could not start. Use Print and choose Save as PDF. '+String(e?.message||e))}
  finally{if(button){button.disabled=false;button.textContent=old}}
