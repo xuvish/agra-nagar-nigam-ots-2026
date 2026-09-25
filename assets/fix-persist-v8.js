@@ -9,11 +9,42 @@ function syncPrivate(E){
   E.apps=(E.apps||[]).map(a=>{const x=m.get(A(a));return x?{...a,...x}:a});
  }catch(e){}
 }
+function applyCurrentChhattaWard(E){
+ const roster=window.OTS_CHHATTA_OLD_WARD||{},ids=window.OTS_MASTER_WARDS||{};
+ const correction=(a)=>{
+  const id=String(a?.['Property UID']||a?.['Property ID']||a?.['Master property ID']||'').trim().toUpperCase();
+  const x=ids[id];if(!x||x[0]!=='Chhatta'||x.length<4)return;
+  a['Allocated zone']='Chhatta';a['Allocated ward']=x[1]+' '+x[2];a['Allocated RI / TC']=x[3];
+  a['Allocation basis']='Exact Property ID · current Chhatta 25-ward roster';
+ };
+ for(const a of E.apps||[])correction(a);
+ for(const p of E.payments||[]){
+  const x=ids[String(p?.['Property UID']||'').trim().toUpperCase()];
+  if(x?.[0]==='Chhatta'&&x.length>=4){p['Property zone']='Chhatta';p['Property ward']=x[1]+' '+x[2];p['Property RI']=x[3]}
+ }
+ for(const w of E.wardRows||[]){
+  if(w.zone!=='Chhatta')continue;
+  const x=roster[Number(w.wardNo)];if(!x)continue;
+  w.wardNo=x[0];w.ward=x[1];w.ri=x[2];w.post='RI';
+ }
+ const fields=['applications','approved','inProcess','rejected','applicantPending','demand','receivedSummary','paidApplicants','receipts','collection'],byRI=new Map();
+ for(const w of E.wardRows||[]){
+  const key=w.zone+'|'+w.ri;
+  let row=byRI.get(key);
+  if(!row){row={zone:w.zone,ri:w.ri,post:w.post||'',wards:0};for(const f of fields)row[f]=0;byRI.set(key,row)}
+  row.wards++;for(const f of fields)row[f]+=Number(w[f])||0;
+ }
+ if(byRI.size)E.riRows=[...byRI.values()].sort((a,b)=>a.zone.localeCompare(b.zone)||a.ri.localeCompare(b.ri));
+ if(Array.isArray(window.PUBLIC?.roster))for(const w of window.PUBLIC.roster){
+  if(w.zone!=='Chhatta')continue;const x=roster[Number(w.wardNo)];if(x){w.wardNo=x[0];w.ward=x[1];w.ri=x[2];w.post='RI'}
+ }
+}
 async function enrichAndSync(E){
  try{const x=window.__applyPropertyContactMaster?.();if(x&&typeof x.then==='function')await x}catch(e){}
  syncPrivate(E);
  try{window.__applyFollowupContactSafety?.()}catch(e){}
  syncPrivate(E);
+ applyCurrentChhattaWard(E);
 }
 window.processReportSet=async function(){
  const out=await PREV.apply(this,arguments);
