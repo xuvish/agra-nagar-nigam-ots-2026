@@ -6,7 +6,7 @@
 const SPECS={
   apps:{title:/Received Application/i,anchor:{min:72,max:112,pattern:/^OTS\d*$/i},edges:[70,110,125,160,350,565,625,688,740],header:['AppNo','AppName','Property_UID','PropertyNo','AppStatusDate','Status'],build:c=>[field(c,1),words(c,4),field(c,5),field(c,7),field(c,8),status(c,9)]},
   approved:{title:/Approved Application Summary Report/i,anchor:{min:72,max:132,pattern:/^OTS\d*$/i},edges:[70,120,300,480,535,595,650],header:['Application No','Name Of Applicant','Application Received On','Application Approved On','Approved By','Last Remark'],build:c=>[field(c,1),words(c,2),words(c,3),words(c,4),words(c,6).replace(/\bramb\s+abu\b/i,'Rambabu'),words(c,7)]},
-  inprocess:{title:/In-Process Application/i,anchor:{min:70,max:102,pattern:/^OTS\d*$/i},edges:[70,95,170,280,335,420,500],header:['Application No','Name of Applicant','Application Received On','Pending with whom','For How Many Days','Last Remark'],build:c=>[field(c,1),words(c,2),words(c,3),words(c,5),field(c,6),words(c,7)]},
+  inprocess:{title:/In-Process Application/i,anchor:{min:70,max:102,pattern:/^OTS\d*$/i},edges:[70,95,170,280,335,420,500],header:['Application No','Name of Applicant','Application Received On','Pending with whom','For How Many Days','Last Remark'],build:c=>[field(c,1),words(c,2),words(c,3),pendingWith(c),field(c,6),words(c,7)]},
   collection:{title:/Daily Collection Report/i,anchor:{min:50,max:70,pattern:/^\d+$/},edges:[70,100,160,230,290,330,365,405,445,495,565,620,675,750],header:['Receipt No.','Total Amount','Payment Date','Application No.','Mode','Name','Property No.','Mobile No.','CashWindow Name','Zone Name','Ward Name','Payment Mode'],build:c=>[field(c,7),amount(c,10),collectionDate(c,9),field(c,2),field(c,1),words(c,3),field(c,5),field(c,6),words(c,11),words(c,12),words(c,13),words(c,14)]},
   payment:{title:/Collection Report FullPart/i,anchor:{min:70,max:101,pattern:/^OTS\d*$/i},edges:[70,101,125,235,270,320,350,390,465,540,615,690,760],header:['AppNo','AppName','Property_UID','PropertyNo','ZoneName','WardName','TotalPayable','TotalPaid','TotalDiscount','PaidDate'],build:c=>[field(c,1),words(c,3),field(c,4),field(c,5),words(c,6),words(c,7),amount(c,10),amount(c,11),amount(c,12),field(c,13)]},
   zone:{title:/Zone\/Ward Wise Application Summary/i,anchor:{min:58,max:120,pattern:/^Agra\s+Nagar/i},edges:[55,120,200,380,450,495,535,590,630,675,745],header:['Sr No','ULB Name','Zone Name','Ward Name','Appl. Received','In-Time','Overdue','Applicant','Approved','Rejected','Received Amount','Demand Generated'],build:c=>[field(c,0),words(c,1),words(c,2),words(c,3),amount(c,4),amount(c,5),amount(c,6),amount(c,7),amount(c,8),amount(c,9),amount(c,10),amount(c,11)]}
@@ -14,6 +14,21 @@ const SPECS={
 const sort=(a,b)=>a.y-b.y||a.x-b.x;
 function field(c,n){return (c[n]||[]).slice().sort(sort).map(x=>x.value).join('').replace(/\s+/g,'')}
 function words(c,n){return (c[n]||[]).slice().sort(sort).map(x=>x.value).join(' ').replace(/\s+/g,' ').trim()}
+function pendingWith(c){
+ const applicant=/\(\s*A\s*P\s*P\s*L\s*I\s*C\s*A\s*N\s*T\s*\)/i;
+ const role=/\(\s*(?:C\s*T\s*O|R\s*I|T\s*S|I\s*T\s*Officer)\s*\)/i;
+ const recognized=value=>role.test(value)||applicant.test(value);
+ const clean=value=>value.replace(/\(\s*C\s*T\s*O\s*\)/i,'(CTO)').replace(/\(\s*R\s*I\s*\)/i,'(RI)').replace(/\(\s*T\s*S\s*\)/i,'(TS)').replace(applicant,'(Applicant)');
+ const direct=words(c,5);
+ if(recognized(direct))return clean(direct);
+ // PDF exports may move the Pending column horizontally. Find its explicit
+ // portal role marker elsewhere in this same application row.
+ for(let i=2;i<c.length;i++){
+  const value=words(c,i);
+  if(recognized(value))return clean(value);
+ }
+ return 'Unreadable (Other)';
+}
 function status(c,n){const s=field(c,n).toLowerCase();return s.includes('approv')?'Approved':s.includes('reject')?'Rejected':s.includes('progress')?'In Progress':words(c,n)}
 function collectionDate(c,n){const s=words(c,n),m=s.match(/(\d{1,2})\s*([A-Za-z]{3})\s*(\d{4})/);if(!m)throw Error('A collection payment date is unreadable: '+s);const mon={jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'}[m[2].toLowerCase()];if(!mon)throw Error('A collection payment month is unreadable: '+s);return `${m[3]}-${mon}-${m[1].padStart(2,'0')}`}
 function amount(c,n){const raw=(c[n]||[]).map(x=>x.value).find(x=>/^[-+]?\d[\d,]*(?:\.\d+)?$/.test(x));const v=Number(String(raw??'').replace(/,/g,''));if(raw===undefined||!Number.isFinite(v))throw Error('A numeric PDF table cell could not be read (row '+field(c,0)+'; column '+n+').');return v}
@@ -76,14 +91,11 @@ async function convert(file){
     pages.push(items);
   }
   const data=parsePages(pages,spec);if(!data.length)throw Error('No rows found in '+file.name);
-  if(type==='inprocess')for(const row of data){
-    const pending=String(row[3]||'').toLowerCase();
-    if(!/applic|respected|\(cto\)|\(ri\)|\(ts\)|officer|\bit\b/.test(pending))throw Error('Pending with whom is unreadable for '+row[0]+'; check the PDF column layout before calculating.');
-  }
+  const unreadable=type==='inprocess'?data.filter(row=>row[3]==='Unreadable (Other)').length:0;
   if(type==='collection')for(const row of data)if(!row[0]||!row[3]||row[1]<=0)throw Error('A collection receipt is incomplete in PDF.');
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([spec.header,...data]),'OTSReport');
   const bytes=XLSX.write(wb,{bookType:'xlsx',type:'array'});
-  return{type,count:data.length,rows:data,file:new File([bytes],file.name.replace(/\.pdf$/i,'.xlsx'),{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})};
+  return{type,count:data.length,unreadable,rows:data,file:new File([bytes],file.name.replace(/\.pdf$/i,'.xlsx'),{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})};
 }
 window.OTSSevenPdf={convert,parsePages,SPECS};
 })();
