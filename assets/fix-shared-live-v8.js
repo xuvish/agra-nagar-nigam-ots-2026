@@ -70,7 +70,17 @@ function aggregate(E){
  return{snapshot:S(E.snapshot),city,zones,cityDaily:toDaily(cityDaily),zoneDaily:Object.fromEntries(ZONES.map(z=>[z,toDaily(zoneDaily[z])])),cashiers:toCash(cash),cashiersToday:toCash(todayCash),zoneCashiers:zc,paymentMetrics:pm,workflowCity:wf.city,stageByZone:wf.byZone,workflowUnallocated:wf.unallocated,onlineCity,onlineByZone,riRows:E.riRows||[],wardRows:E.wardRows||[],meta:{sourceFiles:E.files||[],engine:'production-v9',collectionAudit:E.collectionAuthorityAudit||null,sourceAuthority:E.sourceAuthorityAudit||null,classifierAudit:E.classifierAudit||null,unallocated:{applications:N(city.applications)-zoneSum('applications'),approved:N(city.approved)-zoneSum('approved'),inProcess:N(city.inProcess)-zoneSum('inProcess'),collection:round(N(city.collection)-collectionSum),receipts:N(city.receipts)-receiptSum},propertyUnallocated:{collection:round(N(city.collection)-wardCollection)},paymentExportDifference:round(paidExport-N(city.collection))}};
 }
 function cache(payload,updatedAt,source,isFinal){try{localStorage.setItem(CACHE_KEY,JSON.stringify({payload,updatedAt,isFinal:!!isFinal,source}))}catch(e){}}
-function apply(payload,updatedAt,source='live',isFinal=false){if(!payload)return;window.SHARED_LIVE=payload;window.__otsLastUpdatedAt=updatedAt||null;window.__otsSharedState={source,updatedAt:updatedAt||null,error:null,isFinal:!!isFinal};cache(payload,updatedAt,source,isFinal);for(const k of ['snapshot','city','zones','cityDaily','zoneDaily','cashiers','cashiersToday','zoneCashiers','paymentMetrics','workflowCity','stageByZone','workflowUnallocated','onlineCity','onlineByZone','riRows','wardRows','meta'])if(payload[k]!=null)PUBLIC[k]=payload[k];document.dispatchEvent(new CustomEvent('ots:shared-applied',{detail:window.__otsSharedState}));document.dispatchEvent(new CustomEvent('ots:shared-ready',{detail:window.__otsSharedState}))}
+function refreshChhattaRoster(){
+ const mapping=window.OTS_CHHATTA_OLD_WARD||{};
+ for(const w of PUBLIC.roster||[]){
+  if(w.zone!=='Chhatta')continue;
+  const x=mapping[Number(w.wardNo)];
+  if(x&&L(w.ward).replace(/[^a-z]/g,'')===L(x[1]).replace(/[^a-z]/g,'')){
+   w.wardNo=x[0];w.ward=x[1];w.ri=x[2];w.post='RI';
+  }
+ }
+}
+function apply(payload,updatedAt,source='live',isFinal=false){if(!payload)return;window.SHARED_LIVE=payload;window.__otsLastUpdatedAt=updatedAt||null;window.__otsSharedState={source,updatedAt:updatedAt||null,error:null,isFinal:!!isFinal};cache(payload,updatedAt,source,isFinal);for(const k of ['snapshot','city','zones','cityDaily','zoneDaily','cashiers','cashiersToday','zoneCashiers','paymentMetrics','workflowCity','stageByZone','workflowUnallocated','onlineCity','onlineByZone','riRows','wardRows','meta'])if(payload[k]!=null)PUBLIC[k]=payload[k];refreshChhattaRoster();document.dispatchEvent(new CustomEvent('ots:shared-applied',{detail:window.__otsSharedState}));document.dispatchEvent(new CustomEvent('ots:shared-ready',{detail:window.__otsSharedState}))}
 function sourceIsNewer(candidate,current){
  if(!candidate?.snapshot)return false;
  if(!current?.snapshot)return true;
