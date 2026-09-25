@@ -191,6 +191,8 @@ async function enrichReportPayments(E){
   x.p['Property UID']=x.p['Property UID']||r.propertyIdRaw;x.p['Property zone']=r.zone;x.p['Property ward']=w.wardNo+' '+w.ward;x.p['Property RI']=w.ri;
   x.p['Master match']=source;matched++;
  }
+ if(matched<E.payments.length*0.5){E.masterReceiptAudit={version:2,source:'four locally uploaded property masters',receipts:E.payments.length,masterMatched:matched,masterHouseMatched:byHouse,skipped:true,reason:'Master ward coverage too low; existing ward and RI totals preserved'};console.warn('OTS master reconciliation skipped: verified ward matches too low',E.masterReceiptAudit);return E.masterReceiptAudit}
+ const priorWardRows=(E.wardRows||[]).map(w=>({...w})),priorWardSum=priorWardRows.reduce((n,w)=>n+(Number(w.collection)||0),0);
  const wm=new Map((E.wardRows||[]).map(w=>[w.zone+'|'+Number(w.wardNo),w]));
  for(const w of E.wardRows||[]){w.collection=0;w.receipts=0}
  const unique=new Map();let unmapped=0,unmappedAmount=0;
@@ -203,6 +205,7 @@ async function enrichReportPayments(E){
   dst.collection+=amount;dst.receipts++;
   const n=N(p['Application number']);if(n){if(!unique.has(key))unique.set(key,new Set());unique.get(key).add(n)}
  }
+ const mappedTotal=(E.wardRows||[]).reduce((n,w)=>n+(Number(w.collection)||0),0);if(mappedTotal+0.01<priorWardSum){E.wardRows=priorWardRows;E.masterReceiptAudit={version:2,source:'four locally uploaded property masters',receipts:E.payments.length,masterMatched:matched,skipped:true,reason:'Rebuilt ward collection below source ward collection; existing ward and RI totals preserved',rebuiltTotal:mappedTotal,priorWardSum};console.warn('OTS master reconciliation skipped: ward collection regression',E.masterReceiptAudit);return E.masterReceiptAudit}
  for(const [key,set] of unique)wm.get(key).paidApplicants=set.size;
  E.masterReceiptAudit={version:1,source:'four locally uploaded property masters',receipts:E.payments.length,masterMatched:matched,masterHouseMatched:byHouse,unmappedReceipts:unmapped,unmappedAmount};
  return E.masterReceiptAudit
