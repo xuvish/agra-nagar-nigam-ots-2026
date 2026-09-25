@@ -283,3 +283,9 @@ html,body{overflow-x:hidden!important;max-width:100%!important;color:#102f4b!imp
 }
 .prod-zone .today-line span{color:#35647f}
 .prod-zone .today-line b{color:#155c87}
+
+/* The entire visible zone card opens its overview. Detail blocks are inside that popup. */
+.prod-zone{position:relative!important}
+.prod-zone-hit{position:absolute;inset:0;width:100%;height:100%;z-index:5;display:block;border:0;margin:0;padding:0;background:transparent;cursor:pointer;border-radius:inherit;touch-action:manipulation}
+.prod-zone-hit:focus-visible{outline:3px solid #277cb2;outline-offset:2px}
+@media print{.prod-zone-hit{display:none!important}}
