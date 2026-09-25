@@ -9,7 +9,7 @@ async function get(snapshot){if(!snapshot)return null;const d=await openDb();ret
 function payload(){return window.SHARED_LIVE||PUBLIC}
 async function save(E=window.OTS7){
  if(!E?.loaded||!E.snapshot)return null;
- let apps=E.apps||[];try{if(typeof LOCAL!=='undefined'&&LOCAL?.snapshot===E.snapshot&&Array.isArray(LOCAL.applications)&&LOCAL.applications.length)apps=LOCAL.applications}catch(e){}
+ // The persist wrapper has merged private master contacts into E.apps. Keep its\n // final property/ward attribution when saving the report drill-down.\n const apps=E.apps||[];
  const row={snapshot:S(E.snapshot),savedAt:new Date().toISOString(),apps,applications:apps,payments:E.payments||[],paidRows:E.paidRows||[],approved:E.approved||[],inprocess:E.inprocess||[]};
  await put(row);cache=row;document.dispatchEvent(new CustomEvent('ots:detail-ready',{detail:{snapshot:row.snapshot,available:true}}));return row
 }
