@@ -35,8 +35,9 @@ function applyCurrentChhattaWard(E){
   row.wards++;for(const f of fields)row[f]+=Number(w[f])||0;
  }
  if(byRI.size)E.riRows=[...byRI.values()].sort((a,b)=>a.zone.localeCompare(b.zone)||a.ri.localeCompare(b.ri));
- if(Array.isArray(window.PUBLIC?.roster))for(const w of window.PUBLIC.roster){
-  if(w.zone!=='Chhatta')continue;const x=roster[Number(w.wardNo)];if(x){w.wardNo=x[0];w.ward=x[1];w.ri=x[2];w.post='RI'}
+ if(!window.__OTS_CHHATTA_ROSTER_UPGRADED&&Array.isArray(window.PUBLIC?.roster)){
+  for(const w of window.PUBLIC.roster){if(w.zone!=='Chhatta')continue;const x=roster[Number(w.wardNo)];if(x){w.wardNo=x[0];w.ward=x[1];w.ri=x[2];w.post='RI'}}
+  window.__OTS_CHHATTA_ROSTER_UPGRADED=true;
  }
 }
 async function enrichAndSync(E){
