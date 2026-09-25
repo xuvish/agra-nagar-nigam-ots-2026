@@ -71,7 +71,8 @@ function zoneTable(){
  return'<div class="prod-zone-table-wrap"><table class="prod-zone-table"><thead><tr>'+labels.map(x=>'<th>'+esc(x)+'</th>').join('')+'</tr></thead><tbody>'+rows+'</tbody><tfoot>'+total+'</tfoot></table></div>'
 }
 function pendingGrid(z='All'){
- const s=stageStats(z);const items=[['With Applicant',s['With Applicant'],'Correction pending'],['CTO',s.CTO,'Zone / Ward / RI marking'],['RI',s.RI,'Application checking'],['TS',s.TS,'Final approval'],['Other',s.Other+(s.gap||0),s.gap?'Other / source mapping gap':'Other workflow'],['Total In Process',s.total,'Reconciled total']];
+ const s=stageStats(z),unallocated=Object.values(payload().workflowUnallocated||{}).reduce((n,v)=>n+N(v),0),detail=z==='All'?'Detailed report · '+number(unallocated)+' zone verification needed':'Matched detailed cases · zone summary '+number(s.sourceTotal);
+ const items=[['With Applicant',s['With Applicant'],'Correction pending'],['CTO',s.CTO,'Zone / Ward / RI marking'],['RI',s.RI,'Application checking'],['TS',s.TS,'Final approval'],['Other',s.Other,'Other workflow'],['Total In Process',s.total,detail]];
  return items.map((x,i)=>'<div class="prod-pend '+(i===5?'total':'')+'" data-stage="'+esc(x[0])+'" data-zone="'+esc(z)+'"><span>'+esc(x[0])+'</span><b>'+number(x[1])+'</b><small>'+esc(x[2])+'</small></div>').join('')
 }
 function render(){
@@ -128,11 +129,11 @@ function sortStageRows(rows){
  })
 }
 async function showStage(stage,z='All'){
- const D=await detailFor(),apps=D?.apps||[],isOther=stage==='Other',effectiveZone=stage==='CTO'?'All':z;
+ const D=await detailFor(),apps=D?.apps||[],isOther=stage==='Other',effectiveZone=z;
  let rows=apps.filter(a=>L(a['Application status'])!=='approved'&&!/reject|cancel/.test(L(a['Application status']))&&(effectiveZone==='All'||zoneOf(a)===effectiveZone));
  rows=rows.filter(a=>{const p=L(a['Pending with']);if(stage==='With Applicant')return p.includes('applicant')||p.startsWith('respected');if(stage==='CTO')return p.includes('cto');if(stage==='RI')return /\bri\b/.test(p)||p.includes('(ri)');if(stage==='TS')return /\bts\b/.test(p)||p.includes('(ts)');if(isOther)return !p.includes('applicant')&&!p.includes('cto')&&!/\bri\b/.test(p)&&!p.includes('(ri)')&&!/\bts\b/.test(p)&&!p.includes('(ts)');return false});
  rows=sortStageRows(rows);
- const st=stageStats(effectiveZone),scopeLabel=stage==='CTO'?'Nagar Nigam Agra':effectiveZone;
+ const st=stageStats(effectiveZone),scopeLabel=effectiveZone==='All'?'Nagar Nigam Agra':effectiveZone;
  let html=summary([[stage,number(stage==='Other'?st.Other+(st.gap||0):st[stage]||0)],['Scope',scopeLabel],['Total In Process',number(st.total)],['Report Through',fmtDate(payload().snapshot)]]);
  if(rows.length)html+='<h3 class="prod-section-title">Exact Applications at this Stage</h3>'+table([{key:'app',label:'Application'},{key:'name',label:'Applicant / Owner'},{key:'mobile',label:'Mobile'},{key:'zone',label:'Zone'},{key:'ward',label:'Ward'},{key:'ri',label:'RI / TC'},{key:'pending',label:'Pending With'}],rows.slice(0,1200).map(a=>({app:esc(appNo(a)),name:esc(appName(a)),mobile:phone(mobileOf(a)),zone:esc(zoneOf(a)||'—'),ward:esc(wardOf(a)||'—'),ri:esc(riOf(a)||'—'),pending:esc(a['Pending with']||'—')})));
  if(st.gap&&effectiveZone!=='All')html+='<div class="prod-modal-empty">'+number(st.gap)+' additional '+esc(effectiveZone)+' in-process application(s) exist in the Zone/Ward control but do not yet have safe individual property-zone evidence. They are counted in the total but not guessed into an officer stage.</div>';
@@ -328,10 +329,10 @@ async function downloadPendingResponsibilityPDF(button){
  }catch(e){alert('Direct PDF download could not start. Use Print and choose Save as PDF. '+String(e?.message||e))}
  finally{if(button){button.disabled=false;button.textContent=old}}
 }
-function stageReportScope(stage,z){if(stage==='CTO')return'Nagar Nigam Agra';return z==='All'?'All Zones':z}
+function stageReportScope(stage,z){return z==='All'?'Nagar Nigam Agra':z}
 function stageReportFileBase(stage,z){
  const report=stage+' Pendency';
- return stage==='CTO'?reportFileBase(report):reportFileBase(report,stageReportScope(stage,z))
+ return reportFileBase(report,stageReportScope(stage,z))
 }
 function stageRowsForPDF(rows){
  return rows.map((a,i)=>[String(i+1),S(appNo(a))||'—',S(appName(a))||'—',S(mobileOf(a))||'—',S(zoneOf(a))||'—',S(wardOf(a))||'—',S(riOf(a))||'—',S(a['Pending with'])||'—'])
@@ -350,7 +351,7 @@ async function downloadStagePendencyPDF(stage,z,rows,button){
  const old=button?.textContent;if(button){button.disabled=true;button.textContent='Preparing…'}
  try{
   await ensurePDFDownloadLib();
-  const {jsPDF}=window.jspdf,doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'}),scope=stageReportScope(z),snap=fmtDate(payload().snapshot),report=stage+' Pendency';
+  const {jsPDF}=window.jspdf,doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'}),scope=stageReportScope(stage,z),snap=fmtDate(payload().snapshot),report=stage+' Pendency';
   doc.setFont('helvetica','bold');doc.setTextColor(18,47,69);doc.setFontSize(16);doc.text(report.toUpperCase(),148.5,13,{align:'center'});
   doc.setFont('helvetica','normal');doc.setTextColor(70,80,88);doc.setFontSize(9);doc.text(scope+' · '+snap+' · '+rows.length+' Applications',148.5,19,{align:'center'});
   doc.autoTable({
