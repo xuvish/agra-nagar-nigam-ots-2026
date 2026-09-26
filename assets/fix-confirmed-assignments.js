@@ -20,7 +20,7 @@ window.__applyConfirmedAssignments=function(E){
   let row=null;if(confirmed[k]){const [ward,wardNo,ri]=confirmed[k];row={zone:'Lohamandi',ward,wardNo,ri};}
   else row=window.__resolveWardTight?.(f?.['Zone Name']||a['Raw zone'],f?.['Ward Name']||a['Raw ward'],a['Property UID'])?.row;
   if(!row&&/^09233\d{3}/i.test(String(a['House / property no.']||'')))row=window.__resolveWardTight?.('','',a['House / property no.'])?.row;
-  if(!row){const m=window.OTS_MASTER_WARDS?.[String(a['Property UID']||'').trim().toUpperCase()];if(m)row=(PUBLIC.roster||[]).find(r=>r.zone===m[0]&&String(r.wardNo)===String(m[1]));}
+  if(!row){const m=(window.OTS_MASTER_WARDS?.[String(a['Property UID']||'').trim().toUpperCase()]||window.OTS_MASTER_WARDS?.[String(a['House / property no.']||'').trim().toUpperCase()]);if(m)row=(PUBLIC.roster||[]).find(r=>r.zone===m[0]&&String(r.wardNo)===String(m[1]));}
   if(!row&&!held.has(k)){const z=String(a['Raw zone']||'').toLowerCase().replace(/[^a-z]/g,'');const zone=/chh?atta|chhata|chatta/.test(z)?'Chhatta':/haripar/.test(z)?'Hariparwat':/lohamandi/.test(z)?'Lohamandi':/tajganj/.test(z)?'Tajganj':'';if(zone&&!a['Allocated zone'])a['Allocated zone']=zone;}
   if(row){a['Allocated zone']=row.zone;a['Allocated ward']=row.ward;a['Allocated RI / TC']=row.ri;}
  }
