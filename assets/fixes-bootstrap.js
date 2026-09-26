@@ -28,7 +28,7 @@ function waitFor(fn,ms=4500){
   await load('assets/fix-point7.js?v=20260917-0830');
   await load('assets/fix-point8.js?v=20260917-1145');
   await load('assets/fix-engine-v3.js?v=20260926-1');
-  await load('assets/fix-admin-production-v7.js?v=20260926-1');
+  await load('assets/fix-admin-production-v7.js?v=20260926-detail-1');
   await load('assets/fix-smart-upload.js?v=20260926-1');
   await load('assets/fix-tight-mapper.js?v=20260926-1');
   await load('assets/fix-source-authority.js?v=20260917-2335-v1');
@@ -39,11 +39,11 @@ function waitFor(fn,ms=4500){
   await load('assets/fix-shared-live-v8.js?v=20260926-1');
   await load('assets/fix-property-contact-master.js?v=20260918-0124-v2-multimobile');
   await load('assets/fix-property-contact-multiformat.js?v=20260918-0132-v1');
-  await load('assets/fix-property-master-main-uploader.js?v=20260918-0152-direct-v2');
+  // Property masters have their own upload control; keep them out of the OTS report input.
   await load('assets/fix-authority-v8.js?v=20260918-0910-authority-v8');
   await load('assets/ots-master-ward-index.js?v=20260926-2');
   await load('assets/fix-confirmed-assignments.js?v=20260926-2');
-  await load('assets/fix-persist-v8.js?v=20260926-1');
+  await load('assets/fix-persist-v8.js?v=20260926-detail-1');
   window.processWorkbook=window.processReportSet||window.processWorkbook;
   const submit=document.querySelector('#reportModal .btn.primary');
   if(submit&&window.processWorkbook){submit.onclick=window.processWorkbook;submit.textContent='Submit Reports & Recalculate';}

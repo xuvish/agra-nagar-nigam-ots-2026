@@ -30,6 +30,7 @@ window.processReportSet=async function(){
   const pub=await window.__publishSharedPayload(payload);
   window.__applySharedPayload?.(payload,pub.updated_at||new Date().toISOString(),'live',!!pub.is_final);
   try{await window.OTS_AUTHORITY?.saveDetail?.(E)}catch(e){}
+  try{await window.OTS_PRIVATE?.upload?.(window.OTS_AUTHORITY?.detail?.())}catch(e){console.error('Protected detail save failed',e);window.uploadMessage?.('Public figures published, but applicant detail could not be saved for officers: '+String(e?.message||e),false);return out}
   window.uploadMessage?.('Reports reconciled, saved and published successfully. Refresh will keep this report date.',true);
   document.dispatchEvent(new CustomEvent('ots:published',{detail:{payload,publish:pub}}));
   setTimeout(()=>window.closeReports?.(),650);

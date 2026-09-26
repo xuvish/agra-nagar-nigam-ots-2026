@@ -42,7 +42,7 @@ body.prod-modal-lock{overflow:hidden}
 }
 /* Production V8 final visual/compatibility layer */
 .toolbar,#asof,#zone,.nav,.panel,#kpis,#reportScheduleStrip,.hero,.footer{display:none!important}
-#prodControlsV8{display:grid;grid-template-columns:minmax(360px,1.5fr) 360px;gap:12px;align-items:stretch;margin:12px 0 10px}
+#prodControlsV8{display:grid;grid-template-columns:minmax(320px,1.5fr) 320px auto;gap:12px;align-items:stretch;margin:12px 0 10px}
 .prod-v8-search{position:relative}.prod-v8-search input{width:100%;height:48px;border:1px solid #cbdde8;border-radius:15px;background:linear-gradient(180deg,#fff,#fbfdff);padding:0 52px 0 16px;font-size:13px;color:#234a68;box-shadow:0 8px 22px rgba(40,78,105,.06),inset 0 1px 0 rgba(255,255,255,.95)}
 .prod-v8-search button{position:absolute;right:6px;top:6px;width:36px;height:36px;border:1px solid #cbe0e9;border-radius:10px;background:linear-gradient(135deg,#eef8ff,#eafbf3);display:grid;place-items:center;color:#25678f;cursor:pointer;box-shadow:0 3px 10px rgba(51,102,135,.07)}
 .prod-v8-search button svg{width:17px;height:17px;stroke:currentColor}
