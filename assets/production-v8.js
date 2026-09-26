@@ -113,6 +113,8 @@ async function showApplications(kind,z='All'){
  if(kind==='inprocess')rows=sortStageRows(rows);
  const cc=control(z);
  let html=summary([['Applications',number(cc.applications)],['Approved',number(cc.approved)],['In Process',number(cc.inProcess)],['View',z]]);
+ const expected=kind==='approved'?N(cc.approved):kind==='inprocess'?N(cc.inProcess):kind==='rejected'?N(cc.rejected):N(cc.applications);
+ if(apps.length&&z!=='All'&&rows.length!==expected)html+='<div class="prod-modal-empty">Source check: '+number(rows.length)+' applicant records have '+esc(z)+' property evidence; the zone summary reports '+number(expected)+'. The '+number(Math.abs(rows.length-expected))+'-record difference needs source reconciliation. Individual properties are shown from their available evidence without changing published totals.</div>';
  if(rows.length)html+='<h3 class="prod-section-title">Application Detail</h3>'+table([{key:'app',label:'Application'},{key:'name',label:'Applicant / Owner'},{key:'mobile',label:'Mobile'},{key:'address',label:'Address'},{key:'uid',label:'Property UID'},{key:'zone',label:'Zone'},{key:'ward',label:'Ward'},{key:'ri',label:'RI / TC'},{key:'status',label:'Status'}],rows.slice(0,1200).map(a=>({app:esc(appNo(a)),name:esc(appName(a)),mobile:phone(mobileOf(a)),address:esc(a['Property address']||a.Address||'—'),uid:esc(a['Property UID']||'—'),zone:esc(zoneOf(a)||'—'),ward:esc(wardOf(a)||'—'),ri:esc(riOf(a)||'—'),status:esc(a['Application status']||'—')})));
  else html+='<div class="prod-modal-empty">Detailed applicant records are protected. Administrator: tap Unlock details above. Officers: open your protected zone link.</div>';
  const title=kind==='rejected'?'Rejected Applications':kind==='approved'?'Approved Applications':kind==='inprocess'?'In Process Applications':'Total Applications';
@@ -136,7 +138,7 @@ async function showStage(stage,z='All'){
  rows=sortStageRows(rows);
  const st=stageStats(effectiveZone),scopeLabel=stage==='CTO'?'Nagar Nigam Agra':effectiveZone;
  let html=summary([[stage,number(stage==='Other'?st.Other+(st.gap||0):st[stage]||0)],['Scope',scopeLabel],['Total In Process',number(st.total)],['Report Through',fmtDate(payload().snapshot)]]);
- if(rows.length)html+='<h3 class="prod-section-title">Exact Applications at this Stage</h3>'+table([{key:'app',label:'Application'},{key:'name',label:'Applicant / Owner'},{key:'mobile',label:'Mobile'},{key:'zone',label:'Zone'},{key:'ward',label:'Ward'},{key:'ri',label:'RI / TC'},{key:'pending',label:'Pending With'}],rows.slice(0,1200).map(a=>({app:esc(appNo(a)),name:esc(appName(a)),mobile:phone(mobileOf(a)),zone:esc(zoneOf(a)||'—'),ward:esc(wardOf(a)||'—'),ri:esc(riOf(a)||'—'),pending:esc(a['Pending with']||'—')})));
+ if(rows.length)html+='<h3 class="prod-section-title">Applications at this Stage</h3>'+table([{key:'app',label:'Application'},{key:'name',label:'Applicant / Owner'},{key:'mobile',label:'Mobile'},{key:'address',label:'Address'},{key:'zone',label:'Zone'},{key:'ward',label:'Ward'},{key:'ri',label:'RI / TC'},{key:'pending',label:'Pending With'}],rows.slice(0,1200).map(a=>({app:esc(appNo(a)),name:esc(appName(a)),mobile:phone(mobileOf(a)),address:esc(a['Property address']||a.Address||'—'),zone:esc(zoneOf(a)||'—'),ward:esc(wardOf(a)||'—'),ri:esc(riOf(a)||'—'),pending:esc(a['Pending with']||'—')})));
  if(st.gap&&effectiveZone!=='All')html+='<div class="prod-modal-empty">'+number(st.gap)+' additional '+esc(effectiveZone)+' in-process application(s) exist in the Zone/Ward control but do not yet have safe individual property-zone evidence. They are counted in the total but not guessed into an officer stage.</div>';
  openModal(stage+' Pendency',scopeLabel,html,()=>exportStagePendencyPrint(stage,effectiveZone,rows),'Print');
  if(rows.length){const b=addModalAction('Download PDF',()=>downloadStagePendencyPDF(stage,effectiveZone,rows,b))}
@@ -161,7 +163,7 @@ function callingListScreen(z,rows){
  let html='';
  for(const [ri,list] of groups){
   html+='<div class="calling-group"><div class="calling-group-head"><div><b>'+esc(ri)+'</b><span>'+number(list.length)+' pending applicants</span></div><div class="calling-group-actions"><button type="button" data-ri-print="'+esc(ri)+'">Print</button><button type="button" data-ri-download="'+esc(ri)+'">Download PDF</button></div></div>'+
-  table([{key:'sno',label:'S.No.'},{key:'name',label:'Applicant / Owner'},{key:'mobile',label:'Call'},{key:'app',label:'Application'},{key:'uid',label:'Property UID'},{key:'house',label:'House No.'},{key:'ward',label:'Ward'}],list.map((r,i)=>({sno:number(i+1),name:esc(r.name||'—'),mobile:phone(r.mobile),app:esc(r.app||'—'),uid:esc(r.uid||'—'),house:esc(r.house||'—'),ward:esc(r.ward||'—')})))+
+  table([{key:'sno',label:'S.No.'},{key:'name',label:'Applicant / Owner'},{key:'mobile',label:'Call'},{key:'address',label:'Address'},{key:'app',label:'Application'},{key:'uid',label:'Property UID'},{key:'house',label:'House No.'},{key:'ward',label:'Ward'}],list.map((r,i)=>({sno:number(i+1),name:esc(r.name||'—'),mobile:phone(r.mobile),address:esc(r.address||'—'),app:esc(r.app||'—'),uid:esc(r.uid||'—'),house:esc(r.house||'—'),ward:esc(r.ward||'—')})))+
   '</div>'
  }
  return html
@@ -180,17 +182,18 @@ async function showPaymentZone(mode,z){
  const D=await detailFor(),apps=D?.apps||[],paid=D?.paidRows||[],payments=D?.payments||[],amap=new Map(apps.map(a=>[appNo(a),a]));let rows=[];
  if(mode==='done'){
   const seen=new Set();
-  for(const r of paid){const k=appNo(r),a=amap.get(k);if(!k||seen.has(k)||S(r['Payment state']).toUpperCase()!=='FULL'||!a||L(a['Application status'])!=='approved'||zoneOf(a)!==z)continue;seen.add(k);rows.push({app:k,name:appName(a)||r['Applicant / owner'],mobile:mobileOf(a),uid:a['Property UID']||r['Property UID'],house:a['House / property no.']||r['House / property no.'],ward:wardOf(a),ri:riOf(a),paid:N(r['Total paid'])})}
+  for(const r of paid){const k=appNo(r),a=amap.get(k);if(!k||seen.has(k)||S(r['Payment state']).toUpperCase()!=='FULL'||!a||L(a['Application status'])!=='approved'||zoneOf(a)!==z)continue;seen.add(k);rows.push({app:k,name:appName(a)||r['Applicant / owner'],mobile:mobileOf(a),address:a['Property address']||a.Address,uid:a['Property UID']||r['Property UID'],house:a['House / property no.']||r['House / property no.'],ward:wardOf(a),ri:riOf(a),paid:N(r['Total paid'])})}
  }else{
   const paidSet=new Set([...paid,...payments].map(appNo).filter(Boolean));
-  rows=apps.filter(a=>L(a['Application status'])==='approved'&&zoneOf(a)===z&&!paidSet.has(appNo(a))).map(a=>({app:appNo(a),name:appName(a),mobile:mobileOf(a),uid:a['Property UID'],house:a['House / property no.'],ward:wardOf(a),ri:riOf(a)}));
+  rows=apps.filter(a=>L(a['Application status'])==='approved'&&zoneOf(a)===z&&!paidSet.has(appNo(a))).map(a=>({app:appNo(a),name:appName(a),mobile:mobileOf(a),address:a['Property address']||a.Address,uid:a['Property UID'],house:a['House / property no.'],ward:wardOf(a),ri:riOf(a)}));
   rows=sortCallingRows(z,rows)
  }
- let html=summary([[z,number(mode==='done'?(done(z)??0):pending(z))],['Approved',number(control(z).approved)],['Payment Started',number(started(z))],['Collection',money(collection(z).total)]]);
+ const expected=mode==='done'?(done(z)??0):pending(z);let html=summary([[z,number(expected)],['Approved',number(control(z).approved)],['Payment Started',number(started(z))],['Collection',money(collection(z).total)]]);
+ if(apps.length&&rows.length!==expected)html+='<div class="prod-modal-empty">Source check: '+number(rows.length)+' property-linked records in this list; zone summary reports '+number(expected)+'. Review the '+number(Math.abs(rows.length-expected))+'-record difference before treating the two sources as reconciled.</div>';
  if(rows.length){
   html+='<h3 class="prod-section-title">'+(mode==='done'?'FULL Payment Completed':'Volunteer Calling List · RI / TC-wise')+'</h3>';
   if(mode==='done'){
-   html+=table([{key:'app',label:'Application'},{key:'name',label:'Applicant / Owner'},{key:'mobile',label:'Mobile'},{key:'uid',label:'Property UID'},{key:'house',label:'House No.'},{key:'ward',label:'Ward'},{key:'ri',label:'RI / TC'},{key:'paid',label:'Paid',num:true}],rows.slice(0,1200).map(r=>({...r,app:esc(r.app),name:esc(r.name||'—'),mobile:phone(r.mobile),uid:esc(r.uid||'—'),house:esc(r.house||'—'),ward:esc(r.ward||'—'),ri:esc(r.ri||'—'),paid:money(r.paid)})))
+   html+=table([{key:'app',label:'Application'},{key:'name',label:'Applicant / Owner'},{key:'mobile',label:'Mobile'},{key:'address',label:'Address'},{key:'uid',label:'Property UID'},{key:'house',label:'House No.'},{key:'ward',label:'Ward'},{key:'ri',label:'RI / TC'},{key:'paid',label:'Paid',num:true}],rows.slice(0,1200).map(r=>({...r,app:esc(r.app),name:esc(r.name||'—'),mobile:phone(r.mobile),address:esc(r.address||'—'),uid:esc(r.uid||'—'),house:esc(r.house||'—'),ward:esc(r.ward||'—'),ri:esc(r.ri||'—'),paid:money(r.paid)})))
   }else html+=callingListScreen(z,rows)
  }else html+='<div class="prod-modal-empty">Applicant-level detail is available on the browser where this date’s reports were uploaded.</div>';
  openModal((mode==='done'?'Payment Done · ':'Payment Pending · ')+z,mode==='done'?'Approved applicants with FULL payment completed':'Approved applicants to call for payment follow-up · grouped RI/TC-wise',html,mode==='pending'&&rows.length?()=>exportPendingCallingListPDF(z,rows):null,mode==='pending'?'Print Complete Zone List / PDF':'Export PDF');

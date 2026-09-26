@@ -114,13 +114,13 @@ async function parseMasterFile(file,zone,status){
 
 function meta(){try{return JSON.parse(localStorage.getItem(META_KEY)||'null')}catch(e){return null}}
 function setMeta(v){localStorage.setItem(META_KEY,JSON.stringify(v))}
-function metaText(){const m=meta();if(!m)return'Not loaded in this browser — reload the 4 zone CSVs once for multi-mobile support';return`${Number(m.properties||0).toLocaleString('en-IN')} properties · ${Number(m.contactNumbers||0).toLocaleString('en-IN')} distinct mobile numbers · loaded ${new Date(m.loadedAt).toLocaleString('en-IN')}`}
+function metaText(){const m=meta();if(!m)return'25 Sept applicant details: four-zone master matches protected online. Full master roster for future uploads: import four CSV/Excel files here once.';return`${Number(m.properties||0).toLocaleString('en-IN')} properties · ${Number(m.contactNumbers||0).toLocaleString('en-IN')} distinct mobile numbers · loaded ${new Date(m.loadedAt).toLocaleString('en-IN')}`}
 
 function injectUI(){
  const modal=document.getElementById('reportModal');if(!modal||document.getElementById('propertyMasterPanel'))return;
  const anchor=document.getElementById('reportChecklist')||modal.querySelector('.drop');if(!anchor)return;
  const panel=document.createElement('div');panel.id='propertyMasterPanel';panel.className='notice';panel.style.cssText='margin-top:10px;padding:12px';
- panel.innerHTML=`<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><div><b>PRIVATE PROPERTY CONTACT MASTER</b><div style="font-size:10px;color:#87a6b9;margin-top:4px">One-time per browser: Chhatta + Hariparwat + Tajganj + Lohamandi CSVs. All distinct source mobile numbers for a matched property are retained and shown in the calling list. Never published to GitHub/Supabase.</div></div><button class="btn" id="propertyMasterChoose" type="button">Load / Replace 4 Zone CSVs</button></div><input id="propertyMasterFiles" type="file" accept=".csv" multiple style="display:none"><div id="propertyMasterStatus" style="font-size:10px;margin-top:8px;color:#b8d3e3">${esc(metaText())}</div>`;
+ panel.innerHTML=`<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><div><b>FOUR ZONE PROPERTY MASTERS</b><div style="font-size:10px;color:#87a6b9;margin-top:4px">Separate from the five OTS reports. Import Chhatta, Hariparwat, Tajganj and Lohamandi CSV/Excel files for contact matching on future uploads.</div></div><button class="btn" id="propertyMasterChoose" type="button">Import 4 Master Files</button></div><input id="propertyMasterFiles" type="file" accept=".csv,.xlsx,.xls" multiple style="display:none"><div id="propertyMasterStatus" style="font-size:10px;margin-top:8px;color:#b8d3e3">${esc(metaText())}</div>`;
  anchor.insertAdjacentElement('afterend',panel);
  const input=panel.querySelector('#propertyMasterFiles'),btn=panel.querySelector('#propertyMasterChoose');btn.onclick=()=>input.click();input.onchange=()=>importMaster([...input.files]);
 }

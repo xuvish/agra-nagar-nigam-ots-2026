@@ -37,8 +37,8 @@ function waitFor(fn,ms=4500){
   await load('assets/fix-intelligence-local-bridge.js?v=20260918-0042-calling-mobile-v3');
   await load('assets/fix-collection-authority-v2.js?v=20260918-0840-collection-v3');
   await load('assets/fix-shared-live-v8.js?v=20260926-1');
-  await load('assets/fix-property-contact-master.js?v=20260918-0124-v2-multimobile');
-  await load('assets/fix-property-contact-multiformat.js?v=20260918-0132-v1');
+  await load('assets/fix-property-contact-master.js?v=20260926-detail-2');
+  await load('assets/fix-property-contact-multiformat.js?v=20260926-detail-2');
   // Property masters have their own upload control; keep them out of the OTS report input.
   await load('assets/fix-authority-v8.js?v=20260918-0910-authority-v8');
   await load('assets/ots-master-ward-index.js?v=20260926-2');

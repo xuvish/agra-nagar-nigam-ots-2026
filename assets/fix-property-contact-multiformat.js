@@ -58,9 +58,15 @@ function mergeRecord(old,r){
   return old;
 }
 async function parseMasterFile(file,zone){
-  const text=await file.text(),marker='S.No.,"Property ID"',at=text.indexOf(marker);
-  if(at<0)throw Error(`${file.name}: Corporate Ward Wise property header not found`);
-  const wb=XLSX.read(text.slice(at),{type:'string',raw:true}),sh=wb.Sheets[wb.SheetNames[0]],rows=XLSX.utils.sheet_to_json(sh,{defval:'',raw:false});
+  let wb;
+  if(/\.csv$/i.test(file.name)){
+    const text=await file.text(),marker='S.No.,"Property ID"',at=text.indexOf(marker);
+    if(at<0)throw Error(`${file.name}: Corporate Ward Wise property header not found`);
+    wb=XLSX.read(text.slice(at),{type:'string',raw:true});
+  }else wb=XLSX.read(await file.arrayBuffer(),{type:'array',raw:true});
+  let rows=[];
+  for(const name of wb.SheetNames){const sh=wb.Sheets[name],head=XLSX.utils.sheet_to_json(sh,{header:1,defval:'',raw:false});const hi=head.findIndex(r=>r.some(v=>N(v).trim()==='Property ID')&&r.some(v=>N(v).trim()==='Corporate Ward No.'));if(hi>=0){rows=XLSX.utils.sheet_to_json(sh,{range:hi,defval:'',raw:false});break}}
+  if(!rows.length)throw Error(`${file.name}: Property ID and Corporate Ward columns not found`);
   const map=new Map();
   for(const x of rows){
     const pid=normId(x['Property ID']);if(!pid)continue;
@@ -94,7 +100,7 @@ function install(){
   if(input.dataset.multiFormatV3==='1')return;input.dataset.multiFormatV3='1';
   input.onchange=()=>importMaster([...input.files]);
   const panel=document.getElementById('propertyMasterPanel');const note=panel?.querySelector('div div div');
-  if(note)note.textContent='One-time per browser: all four zone CSVs. Multiple/formatted source numbers are retained for matched properties; +91/leading-0 formats are normalized for calling. Never published to GitHub/Supabase.';
+  if(note)note.textContent='25 Sept applicant details are already enriched from four masters in protected storage. For future uploads, import the four zone CSV or Excel files once in this browser; the full roster stays private here.';
 }
 window.__extractPropertyMasterMobiles=extractMobiles;
 install();
