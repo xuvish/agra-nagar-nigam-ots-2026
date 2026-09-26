@@ -5,7 +5,7 @@ const ZONES=['Chhatta','Hariparwat','Tajganj','Lohamandi'];
 const oldProcess=window.processReportSet||window.processWorkbook;
 const n=v=>String(v??'').trim().toLowerCase().replace(/&amp;/g,'&').replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
 const num=v=>{const x=Number(String(v??0).replace(/,/g,''));return Number.isFinite(x)?x:0};
-const keyOf=r=>r?`${r.zone}|${Number(r.wardNo)}`:null;
+const keyOf=r=>r?`${r.zone}|${r.wardNo}`:null;
 const zoneNorm=v=>{const x=n(v).replace(/\s/g,'');if(/chh?atta|chhata|chatta/.test(x))return'Chhatta';if(x.includes('haripar')||x.includes('harpar'))return'Hariparwat';if(x.includes('tajganj')||x==='taj')return'Tajganj';if(x.includes('lohamandi')||x.includes('lohamand'))return'Lohamandi';return null};
 
 const LOCKED_ROSTER=[
@@ -42,9 +42,11 @@ function skeleton(v){
   [/\bchh?atta\b|\bchhata\b/g,'chatta'],[/\bnoori\b/g,'nuri'],[/\bdarwaza\b/g,'darwaja'],[/\bnaamner\b|\bnamner\b/g,'naam ner'],[/\bidgah\b/g,'edgah'],[/\bchauki\b|\bchowki\b|\bchoki\b/g,'chawki'],[/\bmewati\s+nagla\b/g,'nagla mewati'],[/\bnagala\b|\bnagal\b/g,'nagla'],[/\baawas\b|\bawas\b|\bawash\b/g,'avas'],[/\bvikash\b/g,'vikas'],[/\bpachimi\b|\bpaschimi\b|\bpashchimi\b|\bpaschim\b/g,'west'],[/\bpurvi\b|\bpurab\b/g,'east'],[/\bdakshin\b/g,'south'],[/\bmaharishi\b/g,'mahrishi'],[/\bajit\b/g,'ajeet'],[/\bajita\b/g,'ajeeta'],[/\bfuvvara\b|\bfuwara\b/g,'fubbara'],[/\bfulel\b|\bfullel\b/g,'fulail'],[/\bharjupura\b/g,'harjjupura'],[/\bkhuash\b|\bkhwas\b|\bkhuwaspura\b|\bkhwaspura\b/g,'khuwash'],[/\bmustfa\b/g,'mustafa'],[/\bquater\b/g,'quarter'],[/\bkhatipada\b|\bkhati\s+pada\b/g,'khati para'],[/\bkhatena\b/g,'khataina'],[/\brajamandi\b|\brajimandi\b/g,'raja mandi'],[/\brammohan\b/g,'ram mohan'],[/\beram\s+mohan\s+nagar\b/g,'ram mohan nagar'],[/\bbhadauria\b/g,'bhadauriya'],[/\bghadi\b|\bghari\b/g,'gadhi'],[/\bfarzana\b/g,'farjana'],[/\bsarla\s*bagh\b|\bsarala\s*bagh\b/g,'sarlabagh'],[/\bkachpura\b|\bkachh\s+pura\b/g,'kachhpura'],[/\bseeta\b/g,'sita'],[/\brawatpara\b/g,'rawat para'],[/\bshahdara\b/g,'shahdra'],[/\bshastri\s*puram\b|\bshashtri\s*puram\b|\bshashtripuram\b|\bsastipshastripuram\b|\bshashtripurashastripuram\b|\bshashtripurshastripuram\b|\bshastshastripuram\b/g,'shastripuram'],[/\bsikandar\b/g,'sikandra'],[/\bpeepal\b/g,'pipal'],[/\bsarai\b/g,'saray'],[/\bghatia\b/g,'ghatiya'],[/\bukhrrra\b/g,'ukhrra'],[/\bnaripura\b/g,'nari pura'],[/\bmohanpura\b/g,'mohan pura'],[/\bnawala?ganj\b|\bnawalnawal\b|\bnawalganj\b/g,'nawal ganj']
  ];
  for(const [a,b] of reps)x=x.replace(a,b);
- return x.replace(/\b(zone|ward|agra|number|no)\b/g,' ').replace(/\b\d{1,3}\b/g,' ').replace(/\s+/g,' ').trim();
+ return x.replace(/\bblock\b/g,' ').replace(/kajipada/g,'kajipadha').replace(/\b(zone|ward|agra|number|no)\b/g,' ').replace(/\b\d{1,3}\b/g,' ').replace(/\s+/g,' ').trim();
 }
 
+LOCKED_ROSTER.push({zone:'Hariparwat',wardNo:56,ward:'Lohiya Nagar',ri:'Kiran Sharma',post:'RI'});
+LOCKED_ROSTER.push({zone:'Lohamandi',wardNo:'north',ward:'Loha Mandi North',ri:'Abhishek Dubey',post:'RI'});
 const MASTER=LOCKED_ROSTER.map(r=>({...r,_k:keyOf(r),_s:skeleton(r.ward)}));
 const BY_KEY=new Map(MASTER.map(r=>[r._k,r]));
 const BY_NO=new Map();for(const r of MASTER){const a=BY_NO.get(Number(r.wardNo))||[];a.push(r);BY_NO.set(Number(r.wardNo),a)}
@@ -82,6 +84,7 @@ function numberCandidate(no,zones){
  return null;
 }
 function directResolve(zoneRaw,wardRaw,uid){
+ const label=skeleton(wardRaw).replace(/\s/g,'');if(['lohamandinorth','lohamandinorthward'].includes(label))return{row:{zone:'Lohamandi',wardNo:'north',ward:'Loha Mandi North',ri:'Abhishek Dubey',post:'RI'},basis:'User-confirmed ward assignment',hardConflict:false,candidateZones:['Lohamandi']};
  const zones=zonesFrom(zoneRaw,wardRaw), names=uniqRows([...nameCandidates(wardRaw),...nameCandidates(zoneRaw)]), numbers=[...new Set([...wardNumbers(wardRaw),...wardNumbers(zoneRaw)])];
  const numRows=uniqRows(numbers.map(no=>numberCandidate(no,zones)).filter(Boolean));
  const uno=uidWardNo(uid), uidRow=uno==null?null:numberCandidate(uno,zones);

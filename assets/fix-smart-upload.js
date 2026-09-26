@@ -2,6 +2,7 @@
 'use strict';
 const AUTH_KEY='ots_admin_session_v1';
 const CANON={apps:'applications.xlsx',zone:'zone ward app summarry.xls',collection:'CollectionReport.xls',full:'FULL PaymentData.xlsx',part:'PART PaymentData.xlsx',inprocess:'InProcessReport.xls',approved:'ApprovedApplicationSummaryReport.xls'};
+let preparedFiles=null;
 const originalProcess=window.processReportSet||window.processWorkbook;
 function norm(v){return String(v??'').trim().toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim()}
 function findHeader(rows,preds){for(let i=0;i<Math.min(rows.length,30);i++){const h=(rows[i]||[]).map(norm);if(preds.every(p=>h.some(v=>v===p||v.includes(p))))return i}return-1}
@@ -45,6 +46,7 @@ async function detect(file){
   for(const sh of wb.SheetNames){
     const rows=XLSX.utils.sheet_to_json(wb.Sheets[sh],{header:1,defval:'',raw:true});
     let hi=findHeader(rows,['appno','status']);if(hi>=0&&findHeader(rows,['property uid'])>=0)return{type:'apps',file:safe,repaired:parsed.repaired};
+    hi=findHeader(rows,['application no','total demand generated','total payment','payment status']);if(hi>=0)return{type:'financial',file:safe,repaired:parsed.repaired,rows:rows.slice(hi+1).map(r=>Object.fromEntries(rows[hi].map((h,i)=>[String(h).trim(),r[i]]))).filter(r=>/^OTS/i.test(String(r['Application No']||'')))};
     hi=findHeader(rows,['appno','zonename','wardname','totalpaid']);if(hi>=0)return{type:paymentKind(rows,hi),file:safe,repaired:parsed.repaired};
     hi=findHeader(rows,['receipt no','total amount','payment date']);if(hi>=0)return{type:'collection',file:safe,repaired:parsed.repaired};
     hi=findHeader(rows,['application no','pending with whom']);if(hi>=0)return{type:'inprocess',file:safe,repaired:parsed.repaired};
@@ -56,10 +58,11 @@ async function detect(file){
 
 async function canonicalizeInput(){
   const input=document.getElementById('masterFile');if(!input||input.dataset.smartBusy==='1')return false;
-  const files=[...input.files];if(files.length!==7)return false;
+  const files=[...input.files];if(![5,7].includes(files.length))return false;
   input.dataset.smartBusy='1';
   try{
-    const found=await Promise.all(files.map(detect));
+    let found=await Promise.all(files.map(detect));
+    if(files.length===5){const types=found.map(x=>x.type);if(['apps','zone','collection','inprocess','financial'].every(t=>types.filter(x=>x===t).length===1)){const fin=found.find(x=>x.type==='financial');window.__otsFinancialRows=fin.rows;const make=(type,rows)=>{const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows,{header:type==='approved'?['Application No','Name Of Applicant','Application Approved On','Mobile No.']:['AppNo','AppName','Property_UID','PropertyNo','ZoneName','WardName','TotalPaid','TotalPayable','TotalDiscount']}),'Report');return{type,file:new File([XLSX.write(wb,{type:'array',bookType:'xlsx'})],CANON[type])}};const paid=fin.rows.filter(r=>Number(String(r['Total Payment']).replace(/,/g,''))>0);const convert=r=>({AppNo:r['Application No'],AppName:r.Name,Property_UID:r['Property Code'],PropertyNo:r['House No'],ZoneName:r['Zone Name'],WardName:r['Ward Name'],TotalPaid:r['Total Payment'],TotalPayable:r['Total Demand Generated'],TotalDiscount:r['Total Discount']});found=found.filter(x=>x.type!=='financial');found.push(make('full',paid.filter(r=>norm(r['Payment Status'])==='paid').map(convert)),make('part',paid.filter(r=>norm(r['Payment Status'])!=='paid').map(convert)),make('approved',fin.rows.map(r=>({'Application No':r['Application No'],'Name Of Applicant':r.Name,'Application Approved On':'','Mobile No.':r.Mobile}))));}}
     const counts={};for(const x of found)counts[x.type]=(counts[x.type]||0)+1;
     const needed=['apps','zone','collection','full','part','inprocess','approved'];
     const ok=needed.every(k=>counts[k]===1)&&!counts.unknown;
@@ -70,15 +73,15 @@ async function canonicalizeInput(){
     if(typeof DataTransfer!=='undefined'){
       const dt=new DataTransfer();
       for(const x of found){const nf=new File([x.file],CANON[x.type],{type:x.file.type,lastModified:x.file.lastModified});dt.items.add(nf)}
-      input.files=dt.files;input.dataset.smartReady='1';input.dispatchEvent(new Event('change',{bubbles:true}));
+      input.files=dt.files;preparedFiles=input.files;input.dataset.smartReady='1';input.dispatchEvent(new Event('change',{bubbles:true}));
     }
     const repaired=found.filter(x=>x.repaired).length;
-    const msg=document.getElementById('uploadMsg');if(msg){msg.className='msg show ok';msg.textContent='7 reports identified by CONTENT — filenames do not matter.'+(repaired?` Auto-repaired ${repaired} corrupted XLSX export(s).`:'')+' Ready to calculate.'}
+    const msg=document.getElementById('uploadMsg');if(msg){msg.className='msg show ok';msg.textContent='Reports identified by CONTENT — filenames do not matter.'+(repaired?` Auto-repaired ${repaired} corrupted XLSX export(s).`:'')+' Ready to calculate.'}
     return true;
   }catch(e){console.error(e);const msg=document.getElementById('uploadMsg');if(msg){msg.className='msg show err';msg.textContent='Spreadsheet repair/read failed: '+e.message}return false}
   finally{input.dataset.smartBusy='0'}
 }
-function install(){const input=document.getElementById('masterFile');if(input&&!input.dataset.smartListener){input.dataset.smartListener='1';input.addEventListener('change',()=>{if(input.dataset.smartReady==='1'){input.dataset.smartReady='';return}canonicalizeInput()})}}
+function install(){const input=document.getElementById('masterFile');if(input&&!input.dataset.smartListener){input.dataset.smartListener='1';input.addEventListener('change',()=>{if(input.files===preparedFiles)return;input.dataset.smartReady='';window.__otsFinancialRows=null;canonicalizeInput()})}}
 const oldOpen=window.openReports;window.openReports=function(){const r=oldOpen.apply(this,arguments);setTimeout(install,120);return r};
 window.processReportSet=async function(){if(sessionStorage.getItem(AUTH_KEY)!=='1'){window.openReports();return}const input=document.getElementById('masterFile');if(input&&input.dataset.smartReady!=='1'){const ok=await canonicalizeInput();if(!ok)return}return originalProcess.apply(this,arguments)};
 window.processWorkbook=window.processReportSet;

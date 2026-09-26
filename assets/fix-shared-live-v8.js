@@ -11,8 +11,8 @@ const appNo=r=>S(r?.['Application number']);
 const approved=a=>L(a?.['Application status'])==='approved';
 const rejected=a=>/reject|cancel/.test(L(a?.['Application status']));
 const zoneOf=a=>{const z=S(a?.['Allocated zone']||a?._r?.zone);return ZONES.includes(z)?z:null};
-const blank=()=>({CTO:0,RI:0,TS:0,'With Applicant':0,Other:0});
-function stage(v){const x=L(v);if(x.includes('applicant')||x.startsWith('respected'))return'With Applicant';if(x.includes('cto'))return'CTO';if(/\bri\b/.test(x)||x.includes('(ri)'))return'RI';if(/\bts\b/.test(x)||x.includes('(ts)'))return'TS';return'Other'}
+const blank=()=>({CTO:0,RI:0,TS:0,IT:0,'With Applicant':0,Other:0});
+function stage(v){const x=L(v);if(x.includes('it officer')||x.includes('gaurav sinha'))return'IT';if(x.includes('applicant')||x.startsWith('respected'))return'With Applicant';if(x.includes('cto'))return'CTO';if(/\bri\b/.test(x)||x.includes('(ri)'))return'RI';if(/\bts\b/.test(x)||x.includes('(ts)'))return'TS';return'Other'}
 function round(v){return Math.round(N(v)*100)/100}
 function paymentMetrics(E){
  const apps=E.apps||[],approvedSet=new Set(apps.filter(approved).map(appNo).filter(Boolean)),zmap=new Map();

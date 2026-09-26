@@ -20,6 +20,7 @@ window.processReportSet=async function(){
  const E=window.OTS7;
  if(!E?.loaded||!E.snapshot)return out;
  await enrichAndSync(E);
+ window.__applyConfirmedAssignments?.(E);
  const payload=window.__buildSharedPayload?.(E);
  if(!payload?.snapshot)throw Error('Final snapshot could not be built.');
  const now=new Date().toISOString();
