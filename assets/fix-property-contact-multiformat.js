@@ -71,7 +71,7 @@ async function parseMasterFile(file,zone){
   for(const x of rows){
     const pid=normId(x['Property ID']);if(!pid)continue;
     const wardNo=Number(String(x['Corporate Ward No.']||'').replace(/\D/g,''))||null,wardName=N(x['Corporate Name']),houseNo=N(x['House No.']),hn=normHouse(houseNo),mobiles=extractMobiles(x.Mobile);
-    const r={key:`${zone}|${pid}`,zone,propertyId:pid,propertyIdRaw:N(x['Property ID']),wardNo,wardName,mohalla:N(x['Corporate Mohalla']),owner:N(x['Owner Name']),houseNo,houseNorm:hn,houseKey:hn?`${zone}|${hn}`:'',wardKey:wardNo?`${zone}|${wardNo}`:'',mobile:mobiles.join(' / '),mobiles,mobileConflict:mobiles.length>1,address:N(x.Address),popularName:N(x['Popular Name']),dueAmount:Number(String(x['Due Amount']||'0').replace(/,/g,''))||0,ri:rosterRI(zone,wardNo,wardName,pid)};
+    const r={key:`${zone}|${pid}`,zone,propertyId:pid,propertyIdRaw:N(x['Property ID']),wardNo,wardName,mohalla:N(x['Corporate Mohalla']),owner:N(x['Owner Name']),houseNo,houseNorm:hn,houseKey:hn?`${zone}|${hn}`:'',wardKey:wardNo?`${zone}|${wardNo}`:'',mobile:mobiles.join(' / '),mobiles,mobileConflict:mobiles.length>1,address:N(x.Address),popularName:N(x['Popular Name']),dueAmount:Number(String(x['Due Amount']||'0').replace(/,/g,''))||0,interestAmount:typeof x.Interest!=='undefined'&&String(x.Interest).trim()!==''?Number(String(x.Interest).replace(/,/g,'')):null,ri:rosterRI(zone,wardNo,wardName,pid)};
     map.set(r.key,mergeRecord(map.get(r.key),r));
   }
   const records=[...map.values()],withContacts=records.filter(r=>r.mobiles.length).length,contactNumbers=records.reduce((s,r)=>s+r.mobiles.length,0),multiMobile=records.filter(r=>r.mobiles.length>1).length;
@@ -106,3 +106,4 @@ window.__extractPropertyMasterMobiles=extractMobiles;
 install();
 console.log('Property Contact Master multi-format mobile importer active');
 })();
+

@@ -157,13 +157,25 @@ function sortCallingRows(z,rows){
   return S(a.name).localeCompare(S(b.name))
  })
 }
+const CHHATTA_WARDS=['Kachhpura','Nai Ki Saray','Bhagawati Bag','Seeta Nagar','Trans Yamuna','Shahdra','Yamuna Par Prakash Nagar','Nawal Ganj','Tedi Bagiya','Ratan Pura','Freeganj','Bag Muzaffar Khan','Nuri Darwaja','Moti Ganj','Rawat Para','Dhankot Fubbara','Pipal Mandi','Kajipadha','Dolikhar','Dera Saras','Mantola','Belanganj','Nai Ki Mandi','Naraich West','Naraich East'];
+function pendingWardKey(v){return L(v).replace(/^\d+\s*[.·-]?\s*/,'').replace(/[^a-z0-9]/g,'')}
+function filterPendingWard(rows,ward){return ward==='All'?rows:rows.filter(r=>pendingWardKey(r.ward)===pendingWardKey(ward))}
+function pendingAmount(v){if(v==null||S(v)==='')return null;const n=Number(S(v).replace(/[,₹\s]/g,''));return Number.isFinite(n)&&n>=0?n:null}
+function pendingTax(a){
+ const total=pendingAmount(a['Property master due']),interest=pendingAmount(a['Property master interest']);
+ const valid=total!==null&&interest!==null&&interest<=total;
+ return {taxTotal:total,taxInterest:valid?interest:null,taxWaiver:valid?interest:null,taxRemaining:valid?Math.round((total-interest)*100)/100:null}
+}
+function taxDisplay(v){return v===null||v===undefined?'Not available':money(v)}
+function taxText(v){return v===null||v===undefined?'Not available':N(v).toLocaleString('en-IN',{maximumFractionDigits:2})}
+function pendingTaxColumns(){return [{key:'taxTotal',label:'Total outstanding incl. interest',num:true},{key:'taxInterest',label:'Interest',num:true},{key:'taxWaiver',label:'Interest waived',num:true},{key:'taxRemaining',label:'After interest waiver',num:true}]}
 function callingListScreen(z,rows){
  const sorted=sortCallingRows(z,rows),groups=new Map();
  for(const r of sorted){const k=S(r.ri)||'Unassigned / Mapping Pending';if(!groups.has(k))groups.set(k,[]);groups.get(k).push(r)}
  let html='';
  for(const [ri,list] of groups){
   html+='<div class="calling-group"><div class="calling-group-head"><div><b>'+esc(ri)+'</b><span>'+number(list.length)+' pending applicants</span></div><div class="calling-group-actions"><button type="button" data-ri-print="'+esc(ri)+'">Print</button><button type="button" data-ri-download="'+esc(ri)+'">Download PDF</button></div></div>'+
-  table([{key:'sno',label:'S.No.'},{key:'name',label:'Applicant / Owner'},{key:'mobile',label:'Call'},{key:'address',label:'Address'},{key:'app',label:'Application'},{key:'uid',label:'Property UID'},{key:'house',label:'House No.'},{key:'ward',label:'Ward'}],list.map((r,i)=>({sno:number(i+1),name:esc(r.name||'—'),mobile:phone(r.mobile),address:esc(r.address||'—'),app:esc(r.app||'—'),uid:esc(r.uid||'—'),house:esc(r.house||'—'),ward:esc(r.ward||'—')})))+
+  table([{key:'sno',label:'S.No.'},{key:'name',label:'Applicant / Owner'},{key:'mobile',label:'Call'},{key:'address',label:'Address'},{key:'app',label:'Application'},{key:'uid',label:'Property UID'},{key:'house',label:'House No.'},{key:'ward',label:'Ward'},...pendingTaxColumns()],list.map((r,i)=>({sno:number(i+1),name:esc(r.name||'—'),mobile:phone(r.mobile),address:esc(r.address||'—'),app:esc(r.app||'—'),uid:esc(r.uid||'—'),house:esc(r.house||'—'),ward:esc(r.ward||'—'),taxTotal:taxDisplay(r.taxTotal),taxInterest:taxDisplay(r.taxInterest),taxWaiver:taxDisplay(r.taxWaiver),taxRemaining:taxDisplay(r.taxRemaining)})))+
   '</div>'
  }
  return html
@@ -173,10 +185,10 @@ function groupCallingRows(z,rows){
  for(const r of sortCallingRows(z,rows)){const k=S(r.ri)||'Unassigned / Mapping Pending';if(!map.has(k))map.set(k,[]);map.get(k).push(r)}
  return map
 }
-function wireCallingGroupActions(z,rows){
+function wireCallingGroupActions(z,rows,ward='All'){
  const groups=groupCallingRows(z,rows);
- document.querySelectorAll('[data-ri-print]').forEach(b=>b.onclick=()=>{const ri=S(b.dataset.riPrint),list=groups.get(ri)||[];exportPendingRIPrint(z,ri,list)});
- document.querySelectorAll('[data-ri-download]').forEach(b=>b.onclick=()=>{const ri=S(b.dataset.riDownload),list=groups.get(ri)||[];downloadPendingRIPDF(z,ri,list,b)})
+ document.querySelectorAll('[data-ri-print]').forEach(b=>b.onclick=()=>{const ri=S(b.dataset.riPrint),list=groups.get(ri)||[];exportPendingRIPrint(z,ward==='All'?ri:ri+' · '+ward,list)});
+ document.querySelectorAll('[data-ri-download]').forEach(b=>b.onclick=()=>{const ri=S(b.dataset.riDownload),list=groups.get(ri)||[];downloadPendingRIPDF(z,ward==='All'?ri:ri+' · '+ward,list,b)})
 }
 async function showPaymentZone(mode,z){
  const D=await detailFor(),apps=D?.apps||[],paid=D?.paidRows||[],payments=D?.payments||[],amap=new Map(apps.map(a=>[appNo(a),a]));let rows=[];
@@ -185,8 +197,21 @@ async function showPaymentZone(mode,z){
   for(const r of paid){const k=appNo(r),a=amap.get(k);if(!k||seen.has(k)||S(r['Payment state']).toUpperCase()!=='FULL'||!a||L(a['Application status'])!=='approved'||zoneOf(a)!==z)continue;seen.add(k);rows.push({app:k,name:appName(a)||r['Applicant / owner'],mobile:mobileOf(a),address:a['Property address']||a.Address,uid:a['Property UID']||r['Property UID'],house:a['House / property no.']||r['House / property no.'],ward:wardOf(a),ri:riOf(a),paid:N(r['Total paid'])})}
  }else{
   const paidSet=new Set([...paid,...payments].map(appNo).filter(Boolean));
-  rows=apps.filter(a=>L(a['Application status'])==='approved'&&zoneOf(a)===z&&!paidSet.has(appNo(a))).map(a=>({app:appNo(a),name:appName(a),mobile:mobileOf(a),address:a['Property address']||a.Address,uid:a['Property UID'],house:a['House / property no.'],ward:wardOf(a),ri:riOf(a)}));
+  rows=apps.filter(a=>L(a['Application status'])==='approved'&&zoneOf(a)===z&&!paidSet.has(appNo(a))).map(a=>({app:appNo(a),name:appName(a),mobile:mobileOf(a),address:a['Property address']||a.Address,uid:a['Property UID'],house:a['House / property no.'],ward:wardOf(a),ri:riOf(a),...pendingTax(a)}));
   rows=sortCallingRows(z,rows)
+ }
+ if(mode==='pending'&&z==='Chhatta'){
+  let ward='All';
+  const draw=()=>{
+   const selected=filterPendingWard(rows,ward);
+   const options='<option value="All">All Wards</option>'+CHHATTA_WARDS.map(w=>'<option value="'+esc(w)+'"'+(w===ward?' selected':'')+'>'+esc(w)+'</option>').join('');
+   const available=selected.filter(r=>r.taxRemaining!=null);
+   let html='<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px"><label for="pendingWardFilter"><b>Ward</b></label><select id="pendingWardFilter" class="control" style="max-width:100%;width:300px">'+options+'</select></div>'+summary([['Selected ward',ward==='All'?'All Wards':ward],['Payment pending',number(selected.length)],['After interest waiver',money(available.reduce((n,r)=>n+r.taxRemaining,0))],['Tax amounts available',number(available.length)+' / '+number(selected.length)]])+'<p class="hint">Outstanding and interest are from the property tax master. Payable shown after 100% interest waiver; any separate full-payment discount is not included.</p>';
+   html+=selected.length?callingListScreen(z,selected):'<div class="prod-modal-empty">No payment-pending applicants in this ward.</div>';
+   openModal('Payment Pending · '+z,ward==='All'?'All 25 wards':ward,html,()=>exportPendingCallingListPDF(z,selected,ward),'Print Selected List / PDF');
+   const b=addModalAction('Download Selected PDF',()=>downloadPendingRIPDF(z,ward==='All'?'All Wards':ward,selected,b));
+   $('pendingWardFilter').onchange=e=>{ward=e.target.value;draw()};wireCallingGroupActions(z,selected,ward)
+  };draw();return
  }
  const expected=mode==='done'?(done(z)??0):pending(z);let html=summary([[z,number(expected)],['Approved',number(control(z).approved)],['Payment Started',number(started(z))],['Collection',money(collection(z).total)]]);
  if(apps.length&&rows.length!==expected)html+='<div class="prod-modal-empty">Source check: '+number(rows.length)+' property-linked records in this list; zone summary reports '+number(expected)+'. Review the '+number(Math.abs(rows.length-expected))+'-record difference before treating the two sources as reconciled.</div>';
@@ -271,9 +296,9 @@ function reportWindow(title,bodyHtml,orientation='portrait'){
  .call-ri span{font-size:11pt;font-weight:900}.call-ri b{font-size:9pt}
  .call-table{table-layout:fixed}
  .call-table .ri-repeat th{background:#dce8f3;color:#132f45;font-size:10pt;text-align:left;padding:7px 8px}
- .call-table th,.call-table td{font-size:8.8pt;padding:6px 5px;line-height:1.2}
- .call-table th:nth-child(1){width:5%}.call-table th:nth-child(2){width:18%}.call-table th:nth-child(3){width:12%}.call-table th:nth-child(4){width:20%}.call-table th:nth-child(5){width:20%}.call-table th:nth-child(6){width:13%}.call-table th:nth-child(7){width:12%}
- .call-table .phone-cell{font-size:10pt;font-weight:900;letter-spacing:.02em;color:#111}
+ .call-table th,.call-table td{font-size:7.5pt;padding:5px 3px;line-height:1.2;overflow-wrap:anywhere}
+ .call-table th:nth-child(1){width:3%}.call-table th:nth-child(2){width:13%}.call-table th:nth-child(3){width:9%}.call-table th:nth-child(4){width:15%}.call-table th:nth-child(5){width:12%}.call-table th:nth-child(6){width:10%}.call-table th:nth-child(7){width:8%}.call-table th:nth-child(8){width:7%}.call-table th:nth-child(9){width:7%}.call-table th:nth-child(10){width:8%}.call-table th:nth-child(11){width:8%}
+ .call-table .phone-cell{font-size:8pt;font-weight:900;letter-spacing:.02em;color:#111}
  .call-table .remark{height:28px}
  .stage-detail-table{table-layout:fixed}
  .stage-detail-table th,.stage-detail-table td{font-size:8pt;padding:5px 4px}
@@ -376,8 +401,8 @@ function callingFileBase(z,ri){
  return safe(z+' - '+ri+' - Payment Pending Calling List - '+d)
 }
 function callingRowsHTML(ri,list){
- const body=list.map((r,i)=>'<tr><td class="center">'+number(i+1)+'</td><td>'+esc(r.name||'—')+'</td><td class="phone-cell">'+esc(r.mobile||'—')+'</td><td>'+esc(r.app||'—')+'</td><td>'+esc(r.uid||r.house||'—')+'</td><td>'+esc(r.ward||'—')+'</td><td class="remark"></td></tr>').join('');
- return '<table class="call-table"><thead><tr class="ri-repeat"><th colspan="7">'+esc(ri)+' · '+number(list.length)+' Pending Applicants</th></tr><tr><th>S.No.</th><th>Applicant / Owner</th><th>Mobile</th><th>Application No.</th><th>Property UID / House</th><th>Ward</th><th>Call Status / Remark</th></tr></thead><tbody>'+body+'</tbody><tfoot><tr class="total-row"><td colspan="6">'+esc(ri)+' TOTAL</td><td class="center">'+number(list.length)+'</td></tr></tfoot></table>'
+ const body=list.map((r,i)=>'<tr><td class="center">'+number(i+1)+'</td><td>'+esc(r.name||'—')+'</td><td class="phone-cell">'+esc(r.mobile||'—')+'</td><td>'+esc(r.app||'—')+'</td><td>'+esc(r.uid||r.house||'—')+'</td><td>'+esc(r.ward||'—')+'</td><td class="num">'+esc(taxDisplay(r.taxTotal))+'</td><td class="num">'+esc(taxDisplay(r.taxInterest))+'</td><td class="num">'+esc(taxDisplay(r.taxWaiver))+'</td><td class="num">'+esc(taxDisplay(r.taxRemaining))+'</td><td class="remark"></td></tr>').join('');
+ return '<table class="call-table"><thead><tr class="ri-repeat"><th colspan="11">'+esc(ri)+' · '+number(list.length)+' Pending Applicants</th></tr><tr><th>S.No.</th><th>Applicant / Owner</th><th>Mobile</th><th>Application No.</th><th>Property UID / House</th><th>Ward</th><th>Total outstanding</th><th>Interest</th><th>Interest waived</th><th>After interest waiver</th><th>Call Status / Remark</th></tr></thead><tbody>'+body+'</tbody><tfoot><tr class="total-row"><td colspan="10">'+esc(ri)+' TOTAL</td><td class="center">'+number(list.length)+'</td></tr></tfoot></table>'
 }
 function exportPendingRIPrint(z,ri,list){
  const snap=fmtDate(payload().snapshot),title=callingFileBase(z,ri);
@@ -401,16 +426,16 @@ async function downloadPendingRIPDF(z,ri,list,button){
   const snap=fmtDate(payload().snapshot),file=callingFileBase(z,ri)+'.pdf';
   doc.setTextColor(18,47,69);doc.setFont('helvetica','bold');doc.setFontSize(16);doc.text((z+' ZONE · '+ri+' · PAYMENT PENDING').toUpperCase(),148.5,13,{align:'center'});
   doc.setFont('helvetica','normal');doc.setTextColor(70,80,88);doc.setFontSize(9);doc.text('Volunteer Calling Sheet · '+snap+' · '+list.length+' Pending Approved Applicants',148.5,19,{align:'center'});
-  const rows=list.map((r,i)=>[String(i+1),S(r.name)||'—',S(r.mobile)||'—',S(r.app)||'—',S(r.uid||r.house)||'—',S(r.ward)||'—','']);
+  const rows=list.map((r,i)=>[String(i+1),S(r.name)||'—',S(r.mobile)||'—',S(r.app)||'—',S(r.uid||r.house)||'—',S(r.ward)||'—',taxText(r.taxTotal),taxText(r.taxInterest),taxText(r.taxWaiver),taxText(r.taxRemaining),'']);
   doc.autoTable({
    startY:24,
-   head:[['S.No.','Applicant / Owner','Mobile','Application No.','Property UID / House','Ward','Call Status / Remark']],
+   head:[['S.No.','Applicant / Owner','Mobile','Application No.','Property UID / House','Ward','Total outstanding','Interest','Interest waived','After interest waiver','Call Status / Remark']],
    body:rows,
    theme:'grid',
    styles:{font:'helvetica',fontSize:8.5,textColor:[20,24,28],cellPadding:2.2,valign:'middle',lineColor:[170,184,195],lineWidth:.25},
    headStyles:{fillColor:[229,237,246],textColor:[38,55,70],fontStyle:'bold',halign:'center',fontSize:8.2},
    alternateRowStyles:{fillColor:[248,250,252]},
-   columnStyles:{0:{cellWidth:12,halign:'center'},1:{cellWidth:42},2:{cellWidth:31,fontStyle:'bold'},3:{cellWidth:48},4:{cellWidth:48},5:{cellWidth:38},6:{cellWidth:45}},
+   columnStyles:{0:{cellWidth:9,halign:'center'},1:{cellWidth:33},2:{cellWidth:23,fontStyle:'bold'},3:{cellWidth:39},4:{cellWidth:32},5:{cellWidth:26},6:{cellWidth:24,halign:'right'},7:{cellWidth:19,halign:'right'},8:{cellWidth:20,halign:'right'},9:{cellWidth:25,halign:'right'},10:{cellWidth:29}},
    margin:{left:8,right:8,bottom:10},
    didDrawPage:()=>{doc.setFontSize(7);doc.setTextColor(95,105,114);doc.text('Agra Nagar Nigam · OTS 2026-27 · '+z+' · '+ri,8,203);doc.text('Page '+doc.internal.getNumberOfPages(),289,203,{align:'right'})}
   });
@@ -418,15 +443,15 @@ async function downloadPendingRIPDF(z,ri,list,button){
  }catch(e){alert('Direct PDF download could not start. Use Print and choose Save as PDF. '+String(e?.message||e))}
  finally{if(button){button.disabled=false;button.textContent=old}}
 }
-function exportPendingCallingListPDF(z,rows){
+function exportPendingCallingListPDF(z,rows,ward='All'){
  const snap=fmtDate(payload().snapshot),groups=groupCallingRows(z,rows),grand=rows.length;
  let sections='',first=true;
  for(const [ri,list] of groups){
   sections+='<section class="call-group '+(first?'first-ri':'next-ri')+'"><div class="call-ri"><span>'+esc(ri)+'</span><b>'+number(list.length)+' Pending</b></div>'+callingRowsHTML(ri,list)+'</section>';
   first=false
  }
- const title=S(z)+' - Payment Pending Calling List - '+snap;
- const body='<section class="page calling-page">'+cleanHead(z.toUpperCase()+' ZONE · PAYMENT PENDING CALLING LIST','Volunteer Calling Sheet · RI / TC-wise | '+snap)+'<div class="call-summary"><b>Total Pending Approved Applicants: '+number(grand)+'</b><span>TS: '+esc(TS[z]||'—')+'</span></div>'+sections+'<div class="footer"><span>नगर निगम आगरा · OTS 2026-27</span><span>'+esc(z)+' Zone</span></div></section>';
+ const title=S(z)+' - '+(ward==='All'?'All Wards':ward)+' - Payment Pending Calling List - '+snap;
+ const body='<section class="page calling-page">'+cleanHead(z.toUpperCase()+' ZONE · PAYMENT PENDING CALLING LIST','Volunteer Calling Sheet · '+(ward==='All'?'All Wards':ward)+' · RI / TC-wise | '+snap)+'<div class="call-summary"><b>Total Pending Approved Applicants: '+number(grand)+'</b><span>TS: '+esc(TS[z]||'—')+'</span></div>'+sections+'<div class="footer"><span>नगर निगम आगरा · OTS 2026-27</span><span>'+esc(z)+' Zone</span></div></section>';
  reportWindow(title,body,'landscape')
 }
 function exportZonePDF(z,c,m,ri,wards,o,st){
@@ -476,3 +501,4 @@ function tick(){if(!state.history&&renderedCollectionDate!==collectionDate()){re
 function init(){if(state.ready)return;state.ready=true;ensure();render();setTimeout(()=>releaseInitialLoading(true),45000);setInterval(tick,1000);document.addEventListener('ots:shared-applied',()=>{if(!state.history)render()});document.addEventListener('ots:shared-ready',()=>{if(!state.history)render()});document.addEventListener('ots:detail-ready',()=>{if(!state.history)render()});document.addEventListener('ots:published',()=>{state.history=null;state.historyMeta=null;state.historyDetail=null;render()})}
 if(window.__OTS_BOOTSTRAP_READY)init();document.addEventListener('ots:bootstrap-ready',init,{once:true});window.addEventListener('load',()=>setTimeout(()=>{if(!state.ready)init()},300));
 })();
+

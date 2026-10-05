@@ -101,7 +101,7 @@ async function parseMasterFile(file,zone,status){
  for(const x of rows){
    const pid=normId(x['Property ID']);if(!pid)continue;rawRows++;
    const wardNo=Number(String(x['Corporate Ward No.']||'').replace(/\D/g,''))||null,wardName=N(x['Corporate Name']),houseNo=N(x['House No.']),hn=normHouse(houseNo),mobile=validMobile(x.Mobile);
-   const r={key:`${zone}|${pid}`,zone,propertyId:pid,propertyIdRaw:N(x['Property ID']),wardNo,wardName,mohalla:N(x['Corporate Mohalla']),owner:N(x['Owner Name']),houseNo,houseNorm:hn,houseKey:hn?`${zone}|${hn}`:'',wardKey:wardNo?`${zone}|${wardNo}`:'',mobile,mobiles:mobile?[mobile]:[],mobileConflict:false,address:N(x.Address),popularName:N(x['Popular Name']),dueAmount:Number(String(x['Due Amount']||'0').replace(/,/g,''))||0,ri:rosterRI(zone,wardNo,wardName,pid)};
+   const r={key:`${zone}|${pid}`,zone,propertyId:pid,propertyIdRaw:N(x['Property ID']),wardNo,wardName,mohalla:N(x['Corporate Mohalla']),owner:N(x['Owner Name']),houseNo,houseNorm:hn,houseKey:hn?`${zone}|${hn}`:'',wardKey:wardNo?`${zone}|${wardNo}`:'',mobile,mobiles:mobile?[mobile]:[],mobileConflict:false,address:N(x.Address),popularName:N(x['Popular Name']),dueAmount:Number(String(x['Due Amount']||'0').replace(/,/g,''))||0,interestAmount:typeof x.Interest!=='undefined'&&String(x.Interest).trim()!==''?Number(String(x.Interest).replace(/,/g,'')):null,ri:rosterRI(zone,wardNo,wardName,pid)};
    map.set(r.key,mergeRecord(map.get(r.key),r));
  }
  const records=[...map.values()];
@@ -162,7 +162,7 @@ async function enrichLocal(force=false){
  const houseKeys=unmatched.filter(x=>x.house&&x.zone).map(x=>`${x.zone}|${x.house}`),byHouseKey=await multiLookup('houseKey',houseKeys);
  for(const x of unmatched){if(x.match||!x.house||!x.zone)continue;const r=pickCandidate(byHouseKey.get(`${x.zone}|${x.house}`),x.a,x.zone);if(r){x.match=r;x.basis='House No + Calling Zone exact';byHouse++}}
  for(const x of ctx){const r=x.match;if(!r)continue;matched++;const a=x.a,phones=mobileList(r),phoneText=phones.join(' / ');
-   a['Property Master match']=x.basis;a['Master property ID']=r.propertyIdRaw||r.propertyId;a['Master owner']=r.owner;a['Master address']=r.address;a['Master popular name']=r.popularName;a['Contact zone']=r.zone;a['Contact ward no']=r.wardNo;a['Contact ward']=r.wardName;a['Contact RI']=r.ri||'';a['Property master due']=r.dueAmount||0;
+   a['Property Master match']=x.basis;a['Master property ID']=r.propertyIdRaw||r.propertyId;a['Master owner']=r.owner;a['Master address']=r.address;a['Master popular name']=r.popularName;a['Contact zone']=r.zone;a['Contact ward no']=r.wardNo;a['Contact ward']=r.wardName;a['Contact RI']=r.ri||'';a['Property master due']=r.dueAmount||0;a['Property master interest']=r.interestAmount??null;
    a['Allocated zone']=r.zone;a['Allocated ward']=r.wardNo?`${r.wardNo} ${r.wardName}`:r.wardName;a['Allocated RI / TC']=r.ri||a['Allocated RI / TC']||'';a['Allocation basis']=`Property Contact Master · ${x.basis}`;a['Calling zone']=r.zone;a['Calling basis']=`Property Contact Master · ${x.basis}`;
    if(phoneText){a['Contact mobile']=phoneText;a['Contact mobiles']=phones;a['Mobile No.']=phoneText;withMobile++;totalNumbers+=phones.length}
    if(!N(a['Applicant / owner'])&&r.owner)a['Applicant / owner']=r.owner;
@@ -189,3 +189,4 @@ window.__applyPropertyContactMaster=()=>enrichLocal(true);window.__propertyConta
 injectUI();setTimeout(injectUI,250);setTimeout(()=>enrichLocal(false),700);
 console.log('Private Property Contact Master engine active · multi-mobile enabled');
 })();
+
