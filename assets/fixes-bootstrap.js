@@ -40,7 +40,7 @@ function waitFor(fn,ms=4500){
   await load('assets/fix-property-contact-master.js?v=20261005-tax-1');
   await load('assets/fix-property-contact-multiformat.js?v=20261005-tax-1');
   // Property masters have their own upload control; keep them out of the OTS report input.
-  await load('assets/fix-authority-v8.js?v=20260918-0910-authority-v8');
+  await load('assets/fix-authority-v8.js?v=20261005-tax-persist-3');
   await load('assets/ots-master-ward-index.js?v=20260926-2');
   await load('assets/fix-confirmed-assignments.js?v=20260926-2');
   await load('assets/fix-persist-v8.js?v=20260926-detail-1');

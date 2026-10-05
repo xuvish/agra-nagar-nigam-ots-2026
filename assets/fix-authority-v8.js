@@ -15,7 +15,12 @@ async function save(E=window.OTS7){
 }
 async function restore(snapshot=S(payload()?.snapshot)){try{cache=await get(snapshot);document.dispatchEvent(new CustomEvent('ots:detail-ready',{detail:{snapshot,available:!!cache}}));return cache}catch(e){return null}}
 function detail(){const snap=S(payload()?.snapshot);return cache&&cache.snapshot===snap?cache:null}
-window.OTS_AUTHORITY={payload,detail,saveDetail:save,restoreDetail:restore,loadDetail:get};
+async function cacheDetail(d){
+ if(!d?.snapshot||d.scope||!Array.isArray(d.apps))return null;
+ const row={...d,snapshot:S(d.snapshot),savedAt:new Date().toISOString(),applications:d.apps};
+ await put(row);cache=row;document.dispatchEvent(new CustomEvent('ots:detail-ready',{detail:{snapshot:row.snapshot,available:true}}));return row;
+}
+window.OTS_AUTHORITY={payload,detail,saveDetail:save,restoreDetail:restore,loadDetail:get,cacheDetail};
 document.addEventListener('ots:shared-ready',()=>restore());
 document.addEventListener('ots:shared-applied',()=>restore());
 })();
