@@ -190,7 +190,7 @@ function wireCallingGroupActions(z,rows,ward='All'){
  document.querySelectorAll('[data-ri-print]').forEach(b=>b.onclick=()=>{const ri=S(b.dataset.riPrint),list=groups.get(ri)||[];exportPendingRIPrint(z,ward==='All'?ri:ri+' · '+ward,list)});
  document.querySelectorAll('[data-ri-download]').forEach(b=>b.onclick=()=>{const ri=S(b.dataset.riDownload),list=groups.get(ri)||[];downloadPendingRIPDF(z,ward==='All'?ri:ri+' · '+ward,list,b)})
 }
-async function showPaymentZone(mode,z){
+async function showPaymentZone(mode,z,initialWard='All'){
  const D=await detailFor(),apps=D?.apps||[],paid=D?.paidRows||[],payments=D?.payments||[],amap=new Map(apps.map(a=>[appNo(a),a]));let rows=[];
  if(mode==='done'){
   const seen=new Set();
@@ -201,7 +201,7 @@ async function showPaymentZone(mode,z){
   rows=sortCallingRows(z,rows)
  }
  if(mode==='pending'&&z==='Chhatta'){
-  let ward='All';
+  let ward=CHHATTA_WARDS.includes(initialWard)?initialWard:'All';
   const draw=()=>{
    const selected=filterPendingWard(rows,ward);
    const options='<option value="All">All Wards</option>'+CHHATTA_WARDS.map(w=>'<option value="'+esc(w)+'"'+(w===ward?' selected':'')+'>'+esc(w)+'</option>').join('');
@@ -498,8 +498,9 @@ window.__otsOpenDate=openDate;
 async function backLive(){state.history=null;state.historyMeta=null;state.historyDetail=null;$('prodCalendarPop')?.classList.remove('open');await window.OTS_AUTHORITY?.restoreDetail?.(S((window.SHARED_LIVE||PUBLIC).snapshot));render()}
 let renderedCollectionDate=collectionDate();
 function tick(){if(!state.history&&renderedCollectionDate!==collectionDate()){renderedCollectionDate=collectionDate();render()}if(!state.history&&$('prodClockV8'))$('prodClockV8').textContent=clock();if($('prodNextSchedule'))$('prodNextSchedule').textContent=nextSchedule()}
-function init(){if(state.ready)return;state.ready=true;ensure();render();setTimeout(()=>releaseInitialLoading(true),45000);setInterval(tick,1000);document.addEventListener('ots:shared-applied',()=>{if(!state.history)render()});document.addEventListener('ots:shared-ready',()=>{if(!state.history)render()});document.addEventListener('ots:detail-ready',()=>{if(!state.history)render()});document.addEventListener('ots:published',()=>{state.history=null;state.historyMeta=null;state.historyDetail=null;render()})}
+function init(){if(state.ready)return;state.ready=true;ensure();render();setTimeout(()=>releaseInitialLoading(true),45000);setInterval(tick,1000);document.addEventListener('ots:shared-applied',()=>{if(!state.history)render()});document.addEventListener('ots:shared-ready',()=>{if(!state.history)render()});document.addEventListener('ots:private-ready',e=>{if(e.detail?.snapshot!==S(payload()?.snapshot))return;const m=String($('prodModalTitle')?.textContent||'').match(/^Payment Pending · (Chhatta|Hariparwat|Tajganj|Lohamandi)$/);if(m&&$('prodModal')?.classList.contains('open'))showPaymentZone('pending',m[1],$('pendingWardFilter')?.value||'All')});document.addEventListener('ots:detail-ready',()=>{if(!state.history)render()});document.addEventListener('ots:published',()=>{state.history=null;state.historyMeta=null;state.historyDetail=null;render()})}
 if(window.__OTS_BOOTSTRAP_READY)init();document.addEventListener('ots:bootstrap-ready',init,{once:true});window.addEventListener('load',()=>setTimeout(()=>{if(!state.ready)init()},300));
 })();
+
 
 

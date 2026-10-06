@@ -5,12 +5,22 @@ const token=(location.hash.match(/(?:^#|&)ots-share=([a-f0-9]{64})(?:&|$)/)||[])
 const cache=new Map();let scope='',busy=null;
 async function call(body){const r=await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),cache:'no-store'});const j=await r.json().catch(()=>({}));if(!r.ok||!j.ok)throw Error(j.error||'Protected detail service unavailable');return j}
 function cred(){return window.__otsAdminCred||{}}
+async function repairLocal(date,c){
+ const local=await window.OTS_AUTHORITY?.loadDetail?.(date);
+ if(!local?.apps?.length||local.scope)return null;
+ const apps=local.apps.map(a=>({'Application number':a['Application number'],'Property UID':a['Property UID']||a['Property ID']||a['Master property ID'],'Allocated zone':a['Allocated zone']||a['Property zone']||a.zone,'Property master due':a['Property master due']}));
+ const result=await call({action:'enrich',snapshot_date:date,apps,...c});
+ const matches=new Map((result.matches||[]).map(r=>[String(r.app).trim()+'|'+r.property,r]));
+ const repaired={...local,apps:local.apps.map(a=>{const key=String(a['Application number']||'').trim()+'|'+String(a['Property UID']||a['Property ID']||a['Master property ID']||'').toUpperCase().replace(/[^A-Z0-9]/g,'');const r=matches.get(key);return r?{...a,'Property master due':r.due,'Property master interest':r.interest,'Property tax basis':'Exact property ID; verified zone master'}:a})};
+ delete repaired.applications;
+ try{const saved=await call({action:'upload',snapshot_date:date,detail:repaired,...c});return saved.detail||repaired}catch(e){console.warn('Detail archive retry:',e.message);return repaired}
+}
 async function load(date){
  if(!date)return null;
  if(cache.has(date))return cache.get(date);
  if(busy)return busy;
  const c=cred();if(!token&&!c.password)return null;
- busy=(async()=>{try{const j=token?await call({action:'officer_read',token}):await call({action:'admin_read',snapshot_date:date,...c});if(j.detail?.snapshot){scope=j.zone||'All';await window.OTS_AUTHORITY?.cacheDetail?.(j.detail).catch(e=>console.warn('Local detail cache:',e.message));cache.set(j.detail.snapshot,j.detail);state();if(token&&j.detail.snapshot!==date){setTimeout(()=>window.__otsOpenDate?.(j.detail.snapshot),0);return null}return j.detail.snapshot===date?j.detail:null}return null}catch(e){console.warn('Protected detail:',e.message);state(e.message);return null}finally{busy=null}})();
+ busy=(async()=>{try{const j=token?await call({action:'officer_read',token}):await call({action:'admin_read',snapshot_date:date,...c});if(!j.detail&&!token)j.detail=await repairLocal(date,c);if(j.detail?.snapshot){scope=j.zone||'All';await window.OTS_AUTHORITY?.cacheDetail?.(j.detail).catch(e=>console.warn('Local detail cache:',e.message));cache.set(j.detail.snapshot,j.detail);state();document.dispatchEvent(new CustomEvent('ots:private-ready',{detail:{snapshot:j.detail.snapshot}}));if(token&&j.detail.snapshot!==date){setTimeout(()=>window.__otsOpenDate?.(j.detail.snapshot),0);return null}return j.detail.snapshot===date?j.detail:null}return null}catch(e){console.warn('Protected detail:',e.message);state(e.message);return null}finally{busy=null}})();
  return busy;
 }
 async function upload(d){const c=cred();if(!c.password)throw Error('Administrator login required');const detail={snapshot:d.snapshot,apps:d.apps||d.applications||[],payments:d.payments||[],paidRows:d.paidRows||[],approved:d.approved||[],inprocess:d.inprocess||[]};const result=await call({action:'upload',snapshot_date:d.snapshot,detail,...c});await window.OTS_AUTHORITY?.cacheDetail?.(result.detail||detail).catch(e=>console.warn('Local detail cache:',e.message));cache.set(d.snapshot,result.detail||detail);scope='All';state();return result}
