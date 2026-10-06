@@ -104,8 +104,14 @@ async function detailFor(date=S(payload()?.snapshot)){
  const previousTitle=$('prodModalTitle')?.textContent||'Details';
  openModal(previousTitle,'Loading applicant details…','<div class="prod-modal-empty" role="status">Applicant details load ho rahi hain. Please wait…</div>');
  if(state.history&&state.historyDetail&&state.historyDetail.snapshot===date)return state.historyDetail;
- try{const remote=await window.OTS_PRIVATE?.load?.(date);if(remote)return remote}catch(e){console.warn('Detail loading:',e.message)}
- try{if(state.history)return await window.OTS_AUTHORITY?.loadDetail?.(date);return window.OTS_AUTHORITY?.detail?.()||await window.OTS_AUTHORITY?.restoreDetail?.(date)}catch(e){console.warn('Saved detail loading:',e.message);return null}
+ const remotePromise=Promise.resolve().then(()=>window.OTS_PRIVATE?.load?.(date)).catch(e=>{console.warn('Detail loading:',e.message);return null});
+ try{
+  const current=!state.history?window.OTS_AUTHORITY?.detail?.():null;
+  if(current?.snapshot===date&&current?.apps?.length)return current;
+  const saved=await window.OTS_AUTHORITY?.loadDetail?.(date);
+  if(saved?.snapshot===date&&saved?.apps?.length)return saved;
+ }catch(e){console.warn('Saved detail loading:',e.message)}
+ return await remotePromise;
 }
 function zoneChoices(mode){return'<div class="prod-zone-choice-grid">'+ZONES.map(z=>'<div class="prod-zone-choice" data-paymode="'+mode+'" data-zone="'+z+'"><span>'+(mode==='done'?'Payment Done':'Payment Pending')+'</span><b>'+number(mode==='done'?(done(z)??0):pending(z))+'</b><small>'+z+' · View applicants →</small></div>').join('')+'</div>'}
 function wirePayChoices(){document.querySelectorAll('[data-paymode]').forEach(el=>el.onclick=()=>showPaymentZone(el.dataset.paymode,el.dataset.zone))}
@@ -197,6 +203,7 @@ function wireCallingGroupActions(z,rows,ward='All'){
  document.querySelectorAll('[data-ri-download]').forEach(b=>b.onclick=()=>{const ri=S(b.dataset.riDownload),list=groups.get(ri)||[];downloadPendingRIPDF(z,ward==='All'?ri:ri+' · '+ward,list,b)})
 }
 async function showPaymentZone(mode,z,initialWard='All'){
+ openModal((mode==='pending'?'Payment Pending':'Payment Done')+' · '+z,'Loading applicant details…','<div class="prod-modal-empty" role="status">Applicant list load ho rahi hai…</div>');
  const D=await detailFor(),apps=D?.apps||[],paid=D?.paidRows||[],payments=D?.payments||[],amap=new Map(apps.map(a=>[appNo(a),a]));let rows=[];
  if(mode==='done'){
   const seen=new Set();
